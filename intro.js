@@ -30,10 +30,11 @@
         this._targetElement = obj;
 
         this._options = {
-            nextLabel: 'Next &rarr;',
-            prevLabel: '&larr; Back',
-            skipLabel: 'Skip',
-            tooltipPosition: 'bottom',
+            overlayOpacity: 0.5,
+            highlightPadding: 10, // padding of the highlight above the current step element
+            nextButton: '.introjs-next',
+            prevButton: '.introjs-prev',
+            skipButton: '.introjs-skip',
             stepIdentifier: '*' // could be a class instead, for example
         };
     }
@@ -44,10 +45,10 @@
       * @api private
       * @method _introForElement
       * @param {Object} targetElm
-      * @returns {Boolean} Success or not?
+      * @returns {Boolean} Success or not
       */
     function _introForElement(targetElm) {
-        var allIntroSteps = targetElm.querySelectorAll(this._options.stepIdentifier + '[data-intro]'),
+        var allIntroSteps = targetElm.querySelectorAll(this._options.stepIdentifier + '[data-intro-step]'),
                 introItems = [],
                 self = this;
 
@@ -59,10 +60,11 @@
         for (var i = 0, elmsLength = allIntroSteps.length; i < elmsLength; i++) {
             var currentElement = allIntroSteps[i];
             introItems.push({
-                element: currentElement,
-                intro: currentElement.getAttribute('data-intro'),
-                step: parseInt(currentElement.getAttribute('data-step'), 10),
-                position: currentElement.getAttribute('data-position') || this._options.tooltipPosition
+                element: targetElm.querySelector(currentElement.getAttribute('data-intro-element')), // the element to highlight
+                content: _getElementHTML(currentElement),
+                step: parseInt(currentElement.getAttribute('data-intro-step'), 10),
+                scrollTo: parseInt(currentElement.getAttribute('data-intro-scroll-to'), 10), // custom scrolling offset for this step
+                highlightPadding: parseInt(currentElement.getAttribute('data-intro-padding'), 10) // custom highlight padding for this step
             });
         }
 
@@ -78,9 +80,6 @@
         if(_addOverlayLayer.call(self, targetElm)) {
             //then, start the show
             _nextStep.call(self);
-
-            var skipButton = targetElm.querySelector('.introjs-skipbutton'),
-                    nextStepButton = targetElm.querySelector('.introjs-nextbutton');
 
             self._onKeyDown = function(e) {
                 if (e.keyCode === 27) {
@@ -102,6 +101,22 @@
             }
         }
         return false;
+    }
+
+    /*
+      * Get the HTML of a DOM element including the element itself
+      * http://stackoverflow.com/questions/1763479/how-to-get-the-html-for-a-dom-element-in-javascript
+      *
+      * @api private
+      * @method _getElementHTML
+      * @param {Object} el
+      * @returns {String} The HTML
+      */
+    function _getElementHTML(el) {
+        var wrap = document.createElement('div');
+        wrap.appendChild(el.cloneNode(true));
+
+        return wrap.innerHTML;
     }
 
     /**
@@ -141,7 +156,8 @@
             return;
         }
 
-        _showElement.call(this, this._introItems[this._currentStep].element);
+        var currentItem = this._introItems[this._currentStep];
+        _showElement.call(this, currentItem.element, currentItem.content, currentItem.scrollTo, currentItem.highlightPadding);
     }
 
     /**
@@ -155,7 +171,8 @@
             return false;
         }
 
-        _showElement.call(this, this._introItems[--this._currentStep].element);
+        var currentItem = this._introItems[--this._currentStep];
+        _showElement.call(this, currentItem.element, currentItem.content, currentItem.scrollTo, currentItem.highlightPadding);
     }
 
     /**
@@ -249,12 +266,18 @@
       *
       * @api private
       * @method _showElement
-      * @param {Object} targetElement
+      * @param {Object} targetElement the element to highlight
+      * @param {Object} content the content of this intro step
+      * @param {Integer} scrollTo if set, forces a scroll to position (element - scrollTo) for this intro step
+      * @param {Integer} highlightPadding padding around the highlight that goes on top of the targetElement
       */
-    function _showElement(targetElement) {
+    function _showElement(targetElement, content, scrollTo, highlightPadding) {
+
+        // use default padding if no custom was provided
+        if (!highlightPadding && highlightPadding !== 0) { highlightPadding = this._options.highlightPadding; }
 
         if (typeof (this._introChangeCallback) !== 'undefined') {
-                this._introChangeCallback.call(this, targetElement);
+                this._introChangeCallback.call(this, targetElement, content);
         }
 
         var self = this,
@@ -262,96 +285,41 @@
                 elementPosition = _getOffset(targetElement);
 
         if(oldHelperLayer != null) {
-            var oldtooltipLayer      = oldHelperLayer.querySelector('.introjs-tooltiptext'),
-                    oldArrowLayer        = oldHelperLayer.querySelector('.introjs-arrow'),
-                    oldtooltipContainer  = oldHelperLayer.querySelector('.introjs-tooltip');
-
-            //hide the tooltip
-            oldtooltipContainer.style.opacity = 0;
+            // hide old tooltip
+            oldHelperLayer.innerHTML = '';
 
             //set new position to helper layer
-            oldHelperLayer.setAttribute('style', 'width: ' + (elementPosition.width + 10)  + 'px; ' +
-                                                                                      'height:' + (elementPosition.height + 10) + 'px; ' +
-                                                                                      'top:'    + (elementPosition.top - 5)     + 'px;' +
-                                                                                      'left: '  + (elementPosition.left - 5)    + 'px;');
+            oldHelperLayer.setAttribute('style', 'width: ' + (elementPosition.width + highlightPadding*2) + 'px; ' +
+                                                 'height:' + (elementPosition.height + highlightPadding*2) + 'px; ' +
+                                                 'top:'    + (elementPosition.top - highlightPadding) + 'px;' +
+                                                 'left: '  + (elementPosition.left - highlightPadding) + 'px;');
             //remove old classes
             var oldShowElement = document.querySelector('.introjs-showElement');
             oldShowElement.className = oldShowElement.className.replace(/introjs-[a-zA-Z]+/g, '').replace(/^\s+|\s+$/g, '');
-            //we should wait until the CSS3 transition is competed (it's 0.3 sec) to prevent incorrect `height` and `width` calculation
+            //we should wait until the CSS3 transition is completed (it's 0.3 sec) to prevent incorrect `height` and `width` calculation
             if (self._lastShowElementTimer) {
                 clearTimeout(self._lastShowElementTimer);
             }
             self._lastShowElementTimer = setTimeout(function() {
-                //set current tooltip text
-                oldtooltipLayer.innerHTML = targetElement.getAttribute('data-intro');
-                //set the tooltip position
-                _placeTooltip.call(self, targetElement, oldtooltipContainer, oldArrowLayer);
-                //show the tooltip
-                oldtooltipContainer.style.opacity = 1;
+                // create new tooltip
+                oldHelperLayer.innerHTML = content;
+                _bindButtons.call(self, oldHelperLayer);
             }, 350);
 
         } else {
-            var helperLayer = document.createElement('div'),
-                    arrowLayer = document.createElement('div'),
-                    tooltipLayer = document.createElement('div');
+            var helperLayer = document.createElement('div');
 
             helperLayer.className = 'introjs-helperLayer';
-            helperLayer.setAttribute('style', 'width: ' + (elementPosition.width + 10)  + 'px; ' +
-                                                                                'height:' + (elementPosition.height + 10) + 'px; ' +
-                                                                                'top:'    + (elementPosition.top - 5)     + 'px;' +
-                                                                                'left: '  + (elementPosition.left - 5)    + 'px;');
+            helperLayer.setAttribute('style', 'width: ' + (elementPosition.width + highlightPadding*2) + 'px; ' +
+                                                 'height:' + (elementPosition.height + highlightPadding*2) + 'px; ' +
+                                                 'top:'    + (elementPosition.top - highlightPadding) + 'px;' +
+                                                 'left: '  + (elementPosition.left - highlightPadding) + 'px;');
 
             //add helper layer to target element
             this._targetElement.appendChild(helperLayer);
+            helperLayer.innerHTML = content;
 
-            arrowLayer.className = 'introjs-arrow';
-            tooltipLayer.className = 'introjs-tooltip';
-
-            tooltipLayer.innerHTML = '<div class="introjs-tooltiptext">' +
-                                                              targetElement.getAttribute('data-intro') +
-                                                              '</div><div class="introjs-tooltipbuttons"></div>';
-            tooltipLayer.appendChild(arrowLayer);
-            helperLayer.appendChild(tooltipLayer);
-
-            //next button
-            var nextTooltipButton = document.createElement('a');
-
-            nextTooltipButton.onclick = function() {
-                _nextStep.call(self);
-            };
-
-            nextTooltipButton.className = 'introjs-button introjs-nextbutton';
-            nextTooltipButton.href = 'javascript:void(0);';
-            nextTooltipButton.innerHTML = this._options.nextLabel;
-
-            //previous button
-            var prevTooltipButton = document.createElement('a');
-
-            prevTooltipButton.onclick = function() {
-                _previousStep.call(self);
-            };
-
-            prevTooltipButton.className = 'introjs-button introjs-prevbutton';
-            prevTooltipButton.href = 'javascript:void(0);';
-            prevTooltipButton.innerHTML = this._options.prevLabel;
-
-            //skip button
-            var skipTooltipButton = document.createElement('a');
-            skipTooltipButton.className = 'introjs-button introjs-skipbutton';
-            skipTooltipButton.href = 'javascript:void(0);';
-            skipTooltipButton.innerHTML = this._options.skipLabel;
-
-            skipTooltipButton.onclick = function() {
-                _exitIntro.call(self, self._targetElement);
-            };
-
-            var tooltipButtonsLayer = tooltipLayer.querySelector('.introjs-tooltipbuttons');
-            tooltipButtonsLayer.appendChild(skipTooltipButton);
-            tooltipButtonsLayer.appendChild(prevTooltipButton);
-            tooltipButtonsLayer.appendChild(nextTooltipButton);
-
-            //set proper position
-            _placeTooltip.call(self, targetElement, tooltipLayer, arrowLayer);
+            _bindButtons.call(this, helperLayer);
         }
 
         //add target element position style
@@ -373,19 +341,56 @@
             targetElement.className += ' introjs-relativePosition';
         }
 
-        if (!_elementInViewport(targetElement)) {
-            var rect = targetElement.getBoundingClientRect(),
-                    top = rect.bottom - (rect.bottom - rect.top),
-                    bottom = rect.bottom - _getWinSize().height;
+        var rect = targetElement.getBoundingClientRect(),
+                top = rect.bottom - (rect.bottom - rect.top),
+                bottom = rect.bottom - _getWinSize().height;
 
-            // Scroll up
-            if (top < 0) {
-                window.scrollBy(0, top - 30); // 30px padding from edge to look nice
+        // Accept custom data-intro-scroll-to param
+        if (scrollTo || scrollTo === 0) {
+            window.scrollTo(0, top - scrollTo);
 
+        } else if (!_elementInViewport(targetElement)) {
             // Scroll down
-            } else {
+            if (bottom < 0) {
                 window.scrollBy(0, bottom + 100); // 70px + 30px padding from edge to look nice
+
+            // Scroll up by default
+            } else {
+                window.scrollBy(0, top - 30); // 30px padding from edge to look nice
             }
+        }
+    }
+
+    /**
+      * Finds and binds the next, previous and skip buttons of the current tour step
+      *
+      * @api private
+      * @method _bindButtons
+      * @param {Object} container to search for buttons
+      */
+    function _bindButtons(container) {
+        var self = this,
+            nextTooltipButton = container.querySelector(this._options.nextButton),
+            prevTooltipButton = container.querySelector(this._options.prevButton),
+            skipTooltipButton = container.querySelector(this._options.skipButton);
+
+        if (nextTooltipButton) {
+            nextTooltipButton.onclick = function() {
+                _nextStep.call(self);
+            };
+        }
+
+        if (prevTooltipButton) {
+            prevTooltipButton.onclick = function() {
+                _previousStep.call(self);
+            };
+        }
+
+        if (skipTooltipButton) {
+            skipTooltipButton.href = 'javascript:void(0);';
+            skipTooltipButton.onclick = function() {
+                _exitIntro.call(self, self._targetElement);
+            };
         }
     }
 
@@ -407,12 +412,13 @@
     }
 
     /**
-      * Add overlay layer to the page
+      * Checks if an element is visible in the current viewport
       * http://stackoverflow.com/questions/123999/how-to-tell-if-a-dom-element-is-visible-in-the-current-viewport
       *
       * @api private
       * @method _elementInViewport
       * @param {Object} el
+      * @return {Boolean} Is the element visible or not
       */
     function _elementInViewport(el) {
         var rect = el.getBoundingClientRect();
@@ -460,7 +466,7 @@
         };
 
         setTimeout(function() {
-            styleText += 'opacity: .5;';
+            styleText += 'opacity: ' + self._options.overlayOpacity + ';';
             overlayLayer.setAttribute('style', styleText);
         }, 10);
         return true;
