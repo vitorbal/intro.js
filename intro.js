@@ -347,7 +347,9 @@
 
         // Accept custom data-intro-scroll-to param
         if (scrollTo || scrollTo === 0) {
-            window.scrollTo(0, top - scrollTo);
+            console.log(rect.top);
+
+            window.scrollBy(0, rect.top - scrollTo);
 
         } else if (!_elementInViewport(targetElement)) {
             // Scroll down
