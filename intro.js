@@ -58,13 +58,16 @@
         }
 
         for (var i = 0, elmsLength = allIntroSteps.length; i < elmsLength; i++) {
-            var currentElement = allIntroSteps[i];
+            var currentElement = allIntroSteps[i],
+                // use default padding if no custom was provided
+                highlightPadding = currentElement.getAttribute('data-intro-padding') || this._options.highlightPadding;
+
             introItems.push({
                 element: targetElm.querySelector(currentElement.getAttribute('data-intro-element')), // the element to highlight
                 content: _getElementHTML(currentElement),
                 step: parseInt(currentElement.getAttribute('data-intro-step'), 10),
                 scrollTo: parseInt(currentElement.getAttribute('data-intro-scroll-to'), 10), // custom scrolling offset for this step
-                highlightPadding: parseInt(currentElement.getAttribute('data-intro-padding'), 10) // custom highlight padding for this step
+                highlightPadding: parseInt(highlightPadding, 10) // custom highlight padding for this step
             });
         }
 
@@ -272,9 +275,6 @@
       * @param {Integer} highlightPadding padding around the highlight that goes on top of the targetElement
       */
     function _showElement(targetElement, content, scrollTo, highlightPadding) {
-
-        // use default padding if no custom was provided
-        if (!highlightPadding && highlightPadding !== 0) { highlightPadding = this._options.highlightPadding; }
 
         if (typeof (this._introChangeCallback) !== 'undefined') {
                 this._introChangeCallback.call(this, targetElement, content);
