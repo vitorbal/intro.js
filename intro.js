@@ -37,7 +37,9 @@
             skipButton: '.introjs-skip',
             stepIdentifier: '*', // could be a class instead, for example
             // Close introduction when clicking on overlay layer
-            exitOnOverlayClick: true
+            exitOnOverlayClick: true,
+            // Disable any interaction with the element being highlighted
+            disableInteraction: false
         };
     }
 
@@ -267,6 +269,36 @@
     }
 
     /**
+     * Add disableinteraction layer and adjust the size and position of the layer
+     *
+     * @api private
+     * @method _disableInteraction
+     * @param {Object} targetElement the currently highlighted element
+     * @param {Integer} highlightPadding padding around the highlight that goes on top of the targetElement
+     */
+    function _disableInteraction(targetElement, highlightPadding) {
+      var disableInteractionLayer = document.querySelector('.introjs-disableInteraction');
+      if (disableInteractionLayer === null) {
+        disableInteractionLayer = document.createElement('div');
+        disableInteractionLayer.className = 'introjs-disableInteraction';
+        this._targetElement.appendChild(disableInteractionLayer);
+      }
+
+      var oldHelperLayer = document.querySelector('.introjs-helperLayer');
+      var elementPosition = _getOffset(targetElement);
+
+
+      //set new position to helper layer
+      disableInteractionLayer.setAttribute('style', 'width: ' + (elementPosition.width + highlightPadding*2) + 'px; ' +
+                                           'height:' + (elementPosition.height + highlightPadding*2) + 'px; ' +
+                                           'top:'    + (elementPosition.top - highlightPadding) + 'px;' +
+                                           'left: '  + (elementPosition.left - highlightPadding) + 'px;');
+
+      // _setHelperLayerPosition.call(this, disableInteractionLayer);
+    }
+
+
+    /**
       * Show an element on the page
       *
       * @api private
@@ -322,6 +354,11 @@
             helperLayer.innerHTML = content;
 
             _bindButtons.call(this, helperLayer);
+        }
+
+        //disable interaction
+        if (this._options.disableInteraction === true) {
+            _disableInteraction.call(self, targetElement, highlightPadding);
         }
 
         //add target element position style

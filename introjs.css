@@ -188,3 +188,8 @@
   -moz-border-radius: 0 0.2em 0.2em 0;
   border-radius: 0 0.2em 0.2em 0;
 }
+
+.introjs-disableInteraction {
+  z-index: 99999999 !important;
+  position: absolute;
+}
