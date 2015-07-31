@@ -35,7 +35,9 @@
             nextButton: '.introjs-next',
             prevButton: '.introjs-prev',
             skipButton: '.introjs-skip',
-            stepIdentifier: '*' // could be a class instead, for example
+            stepIdentifier: '*', // could be a class instead, for example
+            // Close introduction when clicking on overlay layer
+            exitOnOverlayClick: true
         };
     }
 
@@ -461,9 +463,11 @@
 
         targetElm.appendChild(overlayLayer);
 
-        overlayLayer.onclick = function() {
-            _exitIntro.call(self, targetElm);
-        };
+        if (self._options.exitOnOverlayClick) {
+          overlayLayer.onclick = function() {
+              _exitIntro.call(self, targetElm);
+          };
+        }
 
         setTimeout(function() {
             styleText += 'opacity: ' + self._options.overlayOpacity + ';';
