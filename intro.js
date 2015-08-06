@@ -44,35 +44,72 @@
     }
 
     /**
+     * @api private
+     * @param {HTMLElement} stepElement an element from which to extract data of a single step
+     * @returns {Object} The object representation of a single intro step
+     */
+    function _getStepDataFromElement(stepElement) {
+        // use default padding if no custom was provided
+        var highlightPadding = stepElement.getAttribute('data-intro-padding') || this._options.highlightPadding;
+
+        return {
+            element: this._targetElement.querySelector(stepElement.getAttribute('data-intro-element')), // the element to highlight
+            content: _getElementHTML(stepElement),
+            step: parseInt(stepElement.getAttribute('data-intro-step'), 10),
+            scrollTo: parseInt(stepElement.getAttribute('data-intro-scroll-to'), 10), // custom scrolling offset for this step
+            highlightPadding: parseInt(highlightPadding, 10) // custom highlight padding for this step
+        };
+    }
+
+    /**
+     * @api private
+     * @param {Object} stepObject JSON object that represents a single step
+     * @returns {Object} The object representation of a single intro step
+     */
+    function _getStepDataFromObject(stepObject) {
+        return {
+            // the element to highlight
+            element: this._targetElement.querySelector(stepObject.element),
+            // content of the intro tooltip
+            content: _getElementHTML(this._targetElement.querySelector(stepObject.template)),
+            step: stepObject.step,
+            // custom scrolling offset for this step
+            scrollTo: stepObject.scrollTo || null,
+            // custom highlight padding for this step
+            highlightPadding: stepObject.highlightPadding || this._options.highlightPadding
+        };
+    }
+
+    /**
       * Initiate a new introduction/guide from an element in the page
       *
       * @api private
       * @method _introForElement
-      * @param {Object} targetElm
       * @returns {Boolean} Success or not
       */
-    function _introForElement(targetElm) {
-        var allIntroSteps = targetElm.querySelectorAll(this._options.stepIdentifier + '[data-intro-step]'),
-                introItems = [],
-                self = this;
+    function _introForElement() {
+        var targetElm = this._targetElement;
+        var introItems = [];
+        var self = this;
+        var i, steps, step, getStepDataFn;
 
-        //if there's no element to intro
-        if(allIntroSteps.length < 1) {
+        if (this._options.steps) {
+            // use steps passed programmatically
+            steps = this._options.steps;
+            getStepDataFn = _getStepDataFromObject.bind(this);
+        } else {
+            // use steps from data-* annotations
+            steps = targetElm.querySelectorAll(this._options.stepIdentifier + '[data-intro-step]');
+            getStepDataFn = _getStepDataFromElement.bind(this);
+        }
+
+        if (steps.length === 0) {
             return false;
         }
 
-        for (var i = 0, elmsLength = allIntroSteps.length; i < elmsLength; i++) {
-            var currentElement = allIntroSteps[i],
-                // use default padding if no custom was provided
-                highlightPadding = currentElement.getAttribute('data-intro-padding') || this._options.highlightPadding;
-
-            introItems.push({
-                element: targetElm.querySelector(currentElement.getAttribute('data-intro-element')), // the element to highlight
-                content: _getElementHTML(currentElement),
-                step: parseInt(currentElement.getAttribute('data-intro-step'), 10),
-                scrollTo: parseInt(currentElement.getAttribute('data-intro-scroll-to'), 10), // custom scrolling offset for this step
-                highlightPadding: parseInt(highlightPadding, 10) // custom highlight padding for this step
-            });
+        for (i = 0; i < steps.length; i++) {
+            step = getStepDataFn(steps[i]); 
+            introItems.push(step);
         }
 
         //Ok, sort all items with given steps
@@ -81,14 +118,14 @@
         });
 
         //set it to the introJs object
-        self._introItems = introItems;
+        this._introItems = introItems;
 
         //add overlay layer to the page
-        if(_addOverlayLayer.call(self, targetElm)) {
+        if(_addOverlayLayer.call(this, targetElm)) {
             //then, start the show
-            _nextStep.call(self);
+            _nextStep.call(this);
 
-            self._onKeyDown = function(e) {
+            this._onKeyDown = function(e) {
                 if (e.keyCode === 27) {
                     //escape key pressed, exit the intro
                     _exitIntro.call(self, targetElm);
@@ -102,11 +139,12 @@
             };
 
             if (window.addEventListener) {
-                window.addEventListener('keydown', self._onKeyDown, true);
+                window.addEventListener('keydown', this._onKeyDown, true);
             } else if (document.attachEvent) { //IE
-                document.attachEvent('onkeydown', self._onKeyDown);
+                document.attachEvent('onkeydown', this._onKeyDown);
             }
         }
+
         return false;
     }
 
@@ -603,7 +641,7 @@
             return this;
         },
         start: function () {
-            _introForElement.call(this, this._targetElement);
+            _introForElement.call(this);
             return this;
         },
         goToStep: function(step) {
