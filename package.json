@@ -8,10 +8,15 @@
         "url": "https://github.com/vitorbal/intro.js"
     },
     "devDependencies": {
-        "node-minify": "*"
+        "node-minify": "*",
+        "eslint": "*"
     },
     "engine": [
         "node >=0.1.90"
     ],
-    "main": "intro.js"
+    "main": "intro.js",
+    "scripts": {
+        "lint": "./node_modules/.bin/eslint **.js",
+        "build": "make build"
+    }
 }

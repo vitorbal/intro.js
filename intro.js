@@ -1,4 +1,3 @@
-/*global exports*/
 /**
   * Intro.js v0.3.0
   * MIT licensed
@@ -13,9 +12,7 @@
         factory(exports);
     } else if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        /*eslint-disable in-valid-define */
         define(['exports'], factory);
-        /*eslint-enable in-valid-define */
     } else {
         // Browser globals
         factory(root);
@@ -377,9 +374,9 @@
             targetElement.className += ' introjs-relativePosition';
         }
 
-        var rect = targetElement.getBoundingClientRect(),
-                top = rect.bottom - (rect.bottom - rect.top),
-                bottom = rect.bottom - _getWinSize().height;
+        var rect = targetElement.getBoundingClientRect();
+        var top = rect.bottom - (rect.bottom - rect.top);
+        var bottom = rect.bottom - _getWinSize().height;
 
         // Accept custom data-intro-scroll-to param
         if (scrollTo || scrollTo === 0) {
@@ -555,7 +552,9 @@
       * @returns obj3 a new object based on obj1 and obj2
       */
     function _mergeOptions(obj1, obj2) {
-        var obj3 = {}, attrname;
+        var obj3 = {};
+        var attrname;
+
         for (attrname in obj1) { obj3[attrname] = obj1[attrname]; }
         for (attrname in obj2) { obj3[attrname] = obj2[attrname]; }
         return obj3;
