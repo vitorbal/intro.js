@@ -2,40 +2,33 @@
 
 > Better introductions for websites and features with a step-by-step guide for your projects.
 
+This is my personal take on the original intro.js code, built for [InterNations](http://internations.github.io/). Original idea and implementation by [Afshin Mehrabani](https://github.com/afshinm).
 
 ## How to use
-Intro.js can be added to your site in three simple steps:
 
-**1)** Include `intro.js` and `introjs.css` (or the minified version for production) in your page. 
+**1)** Include `intro.js` and `introjs.css` (or the minified version for production) in your page.
 
-> Note: if you need Internet Explorer compatiblity, you have to add introjs-ie.css to the page also:
-  
-```html
-<!--[if lte IE 8]>
-  <link href="../introjs-ie.css" rel="stylesheet">
-<!-- <![endif]-->
-````
-
-**2)** Add `data-intro` and `data-step` to your HTML elements.  
-
-For example: 
+**2)** Create the markup for the tooltip of each step and point to which HTML element should be highlighted using `data-intro-element` and `data-step`. For example:
 
 ```html
-<a href='http://google.com/' data-intro='Hello step one!' data-step='1'></a>
+<a class="js-google-link" href='http://google.com/'></a>
+
+<div data-intro-element="js-google-link" data-step="1">
+    <h1>Click this link to go to google</h1>
+    <p>Try it out!</p>
+</div>
 ````
 
-Optionally you can define `data-position` attribute to define the position of tooltip with values `top`, `right`, `left` and `bottom`. Default value is `bottom`.
-  
+<!-- You can also pass the configuration for the steps programmatically. See:  -->
+
 **3)** Call this JavaScript function:
 ```javascript
 introJs().start();
 ````
- 
+
 Optionally, pass one parameter to `introJs` function to limit the presentation section.
 
 **For example** `introJs(".introduction-farm").start();` runs the introduction only for elements with `class='introduction-farm'`.
-
-<p align="center"><img src="http://usablica.github.com/intro.js/img/introjs-demo.png"></p>  
 
 ## API
 
@@ -176,7 +169,7 @@ introJs().oncomplete(function() {
 
 ###introJs.onexit(providedCallback)
 
-Set callback to exit of introduction. Exit also means pressing `ESC` key and clicking on the overlay layer by the user.  
+Set callback to exit of introduction. Exit also means pressing `ESC` key and clicking on the overlay layer by the user.
 
 **Available since:** v0.2.0
 
@@ -214,15 +207,6 @@ introJs().onchange(function() {
 });
 ````
 
-## Using with:
-
-### Rails
-If you are using the rails asset pipeline you can use the [introjs-rails](https://github.com/heelhook/intro.js-rails) gem.
-
-### Yii framework
-You can simply use this project for Yii framework: https://github.com/moein7tl/Yii-IntroJS
-
-
 ## Build
 
 First you should install `nodejs` and `npm`, then first run this command: `npm install` to install all dependencies.
@@ -231,66 +215,22 @@ Now you can run this command to minify all static resources:
 
     make build
 
-
-## Roadmap
-- Multi-page introduction
-- More browser compatibility
-
-
-## Release History
- * **v0.3.0** - 2013-03-28
-   - Adding support for CommonJS, RequireJS AMD and Browser Globals.
-   - Add `goToStep` function to go to specific step of introduction.
-   - Add `onchange` callback.
-   - Add `exit` function to exit from introduction.
-   - Adding options with `setOption` and `setOptions` functions.
-   - More IE compatibility.
-   - Fix `min-width` bug with tooltip box.
-   - Code cleanup + Better coding style.
-
- * **v0.2.1** - 2013-03-20
-   - Fix keydown event unbinding bug.
-
- * **v0.2.0** - 2013-03-20
-   - Ability to define tooltip position with `data-position` attribute
-   - Add `onexit` and `oncomplete` callback
-   - Better scrolling functionality
-   - Redesign navigating buttons + add previous button
-   - Fix overlay layer bug in wide monitors
-   - Fix show element for elements with position `absolute` or `relative`
-   - Add `enter` key for navigating in steps
-   - Code refactoring
-  
-  
- * **v0.1.0** - 2013-03-16 
-   - First commit. 
-
 ## Author
-**Afshin Mehrabani**
+**This version modified by Vitor Balocco for [InterNations](http://internations.github.io/)**.
 
-- [Twitter](https://twitter.com/afshinmeh)
-- [Github](https://github.com/afshinm)
-- [Personal page](http://afshinm.name/)  
-
-[Other contributors](https://github.com/usablica/intro.js/graphs/contributors)
-
-
-## Support/Discussion
-- [Google Group](https://groups.google.com/d/forum/introjs)
-- [Stackoverflow](http://stackoverflow.com/questions/tagged/intro.js)
+**Original idea and implementation by [Afshin Mehrabani](https://github.com/afshinm)**
 
 ## License
-> Copyright (C) 2012 Afshin Mehrabani (afshin.meh@gmail.com)
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
-documentation files (the "Software"), to deal in the Software without restriction, including without limitation 
-the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, 
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
 and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all copies or substantial portions 
+The above copyright notice and this permission notice shall be included in all copies or substantial portions
 of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED 
-TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
-THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
-CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
