@@ -57,10 +57,14 @@
         var highlightPadding = stepElement.getAttribute('data-intro-padding') || this._options.highlightPadding;
 
         return {
+            // the element to highlight
             element: this._targetElement.querySelector(stepElement.getAttribute('data-intro-element')), // the element to highlight
+            // content of the intro tooltip
             content: _getElementHTML(stepElement),
             step: parseInt(stepElement.getAttribute('data-intro-step'), 10),
+            // custom scrolling offset for this step
             scrollTo: parseInt(stepElement.getAttribute('data-intro-scroll-to'), 10), // custom scrolling offset for this step
+            // custom highlight padding for this step
             highlightPadding: parseInt(highlightPadding, 10) // custom highlight padding for this step
         };
     }
