@@ -213,7 +213,11 @@ First you should install `nodejs` and `npm`, then first run this command: `npm i
 
 Now you can run this command to minify all static resources:
 
-    make build
+    npm run build
+
+Before commiting, make sure eslint is passing:
+
+    npm run lint
 
 ## Author
 **This version modified by Vitor Balocco for [InterNations](http://internations.github.io/)**.
