@@ -20,7 +20,7 @@
 })(this, function(exports) {
     'use strict';
     // Default config/variables
-    var VERSION = '0.3.0';
+    var VERSION = '0.3.1';
 
     /**
       * IntroJs main class
@@ -32,14 +32,16 @@
 
         this._options = {
             overlayOpacity: 0.5,
-            highlightPadding: 10, // padding of the highlight above the current step element
+            // padding of the highlight above the current step element
+            highlightPadding: 10,
             nextButton: '.introjs-next',
             prevButton: '.introjs-prev',
             skipButton: '.introjs-skip',
-            stepIdentifier: '*', // could be a class instead, for example
-            // Close introduction when clicking on overlay layer
+            // could be a class instead, for example
+            stepIdentifier: '*',
+            // close introduction when clicking on overlay layer
             exitOnOverlayClick: true,
-            // Disable any interaction with the element being highlighted
+            // disable any interaction with the element being highlighted
             disableInteraction: false
         };
     }
@@ -55,14 +57,14 @@
 
         return {
             // the element to highlight
-            element: this._targetElement.querySelector(stepElement.getAttribute('data-intro-element')), // the element to highlight
+            element: this._targetElement.querySelector(stepElement.getAttribute('data-intro-element')),
             // content of the intro tooltip
             content: _getElementHTML(stepElement),
             step: parseInt(stepElement.getAttribute('data-intro-step'), 10),
             // custom scrolling offset for this step
-            scrollTo: parseInt(stepElement.getAttribute('data-intro-scroll-to'), 10), // custom scrolling offset for this step
+            scrollTo: parseInt(stepElement.getAttribute('data-intro-scroll-to'), 10),
             // custom highlight padding for this step
-            highlightPadding: parseInt(highlightPadding, 10) // custom highlight padding for this step
+            highlightPadding: parseInt(highlightPadding, 10)
         };
     }
 
@@ -233,9 +235,9 @@
       * @param {Object} targetElement
       */
     function _exitIntro(targetElement) {
-        //remove overlay layer from the page
+        // remove overlay layer from the page
         var overlayLayer = targetElement.querySelector('.introjs-overlay');
-        //for fade-out animation
+        // for fade-out animation
         overlayLayer.style.opacity = 0;
         setTimeout(function() {
             if (overlayLayer.parentNode) {
@@ -260,7 +262,7 @@
         }
         // set the step to zero
         this._currentStep = undefined;
-        //check if any callback is defined
+        // check if any callback is defined
         if (this._introExitCallback !== undefined) {
             this._introExitCallback.call(this);
         }
@@ -376,7 +378,7 @@
 
         var rect = targetElement.getBoundingClientRect();
         var top = rect.bottom - (rect.bottom - rect.top);
-        var bottom = rect.bottom - _getWinSize().height;
+        var bottom = rect.bottom - _getWindowSize().height;
 
         // Accept custom data-intro-scroll-to param
         if (scrollTo || scrollTo === 0) {
@@ -434,15 +436,21 @@
       * via: http://stackoverflow.com/questions/5864467/internet-explorer-innerheight
       *
       * @api private
-      * @method _getWinSize
+      * @method _getWindowSize
       * @returns {Object} width and height attributes
       */
-    function _getWinSize() {
+    function _getWindowSize() {
         if (window.innerWidth !== undefined) {
-            return { width: window.innerWidth, height: window.innerHeight };
+            return {
+                width: window.innerWidth,
+                height: window.innerHeight
+            };
         } else {
             var D = document.documentElement;
-            return { width: D.clientWidth, height: D.clientHeight };
+            return {
+                width: D.clientWidth,
+                height: D.clientHeight
+            };
         }
     }
 

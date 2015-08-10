@@ -207,6 +207,9 @@ introJs().onchange(function() {
 });
 ````
 
+## Browser support
+Recent versions of Chrome and Firefox, IE9+
+
 ## Build
 
 First you should install `nodejs` and `npm`, then first run this command: `npm install` to install all dependencies.
