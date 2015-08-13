@@ -309,7 +309,7 @@
     function _showElement(targetElement, content, scrollTo, highlightPadding) {
 
         if (typeof (this._introChangeCallback) !== 'undefined') {
-            this._introChangeCallback.call(this, targetElement, content);
+            this._introChangeCallback.call(this, this._currentStep + 1, targetElement, content);
         }
 
         var oldHelperLayer = document.querySelector('.introjs-helperLayer');
