@@ -27,8 +27,8 @@
       *
       * @class IntroJs
       */
-    function IntroJs(obj) {
-        this._targetElement = obj;
+    function IntroJs(rootElement) {
+        this._rootElement = rootElement;
 
         this._options = {
             overlayOpacity: 0.5,
@@ -57,7 +57,7 @@
 
         return {
             // the element to highlight
-            element: this._targetElement.querySelector(stepElement.getAttribute('data-intro-element')),
+            element: this._rootElement.querySelector(stepElement.getAttribute('data-intro-element')),
             // content of the intro tooltip
             content: _getElementHTML(stepElement),
             step: parseInt(stepElement.getAttribute('data-intro-step'), 10),
@@ -79,9 +79,9 @@
 
         return {
             // the element to highlight
-            element: this._targetElement.querySelector(stepObject.element),
+            element: this._rootElement.querySelector(stepObject.element),
             // content of the intro tooltip
-            content: _getElementHTML(this._targetElement.querySelector(stepObject.template)),
+            content: _getElementHTML(this._rootElement.querySelector(stepObject.template)),
             step: stepObject.step,
             // custom scrolling offset for this step
             scrollTo: stepObject.scrollTo || null,
@@ -98,9 +98,7 @@
       * @returns {Boolean} Success or not
       */
     function _introForElement() {
-        var targetElm = this._targetElement;
         var introItems = [];
-        var that = this;
         var i, steps, step, getStepDataFn;
 
         if (this._options.steps) {
@@ -109,7 +107,7 @@
             getStepDataFn = _getStepDataFromObject.bind(this);
         } else {
             // use steps from data-* annotations
-            steps = targetElm.querySelectorAll(this._options.stepIdentifier + '[data-intro-step]');
+            steps = this._rootElement.querySelectorAll(this._options.stepIdentifier + '[data-intro-step]');
             getStepDataFn = _getStepDataFromElement.bind(this);
         }
 
@@ -131,31 +129,26 @@
         this._introItems = introItems;
 
         // add overlay layer to the page
-        if (_addOverlayLayer.call(this, targetElm)) {
-            // then, start the show
-            _nextStep.call(this);
+        _addOverlayLayer.call(this);
+        // then, start the show
+        _nextStep.call(this);
 
-            this._onKeyDown = function(e) {
-                if (e.keyCode === 27) {
-                    // escape key pressed, exit the intro
-                    _exitIntro.call(that, targetElm);
-                } else if (e.keyCode === 37) {
-                    // left arrow
-                    _previousStep.call(that);
-                } else if (e.keyCode === 39 || e.keyCode === 13) {
-                    // right arrow or enter
-                    _nextStep.call(that);
-                }
-            };
-
-            if (window.addEventListener) {
-                window.addEventListener('keydown', this._onKeyDown, true);
-            } else if (document.attachEvent) { //IE
-                document.attachEvent('onkeydown', this._onKeyDown);
-            }
-        }
+        window.addEventListener('keydown', _onKeyDown.bind(this), true);
 
         return false;
+    }
+
+    function _onKeyDown(e) {
+        if (e.keyCode === 27) {
+            // escape key pressed, exit the intro
+            _exitIntro.call(this);
+        } else if (e.keyCode === 37) {
+            // left arrow
+            _previousStep.call(this);
+        } else if (e.keyCode === 39 || e.keyCode === 13) {
+            // right arrow or enter
+            _nextStep.call(this);
+        }
     }
 
     /*
@@ -183,7 +176,7 @@
     function _goToStep(step) {
         //because steps starts with zero
         this._currentStep = step - 2;
-        if (typeof (this._introItems) !== 'undefined') {
+        if (typeof this._introItems !== 'undefined') {
             _nextStep.call(this);
         }
     }
@@ -195,7 +188,7 @@
       * @method _nextStep
       */
     function _nextStep() {
-        if (typeof (this._currentStep) === 'undefined') {
+        if (typeof this._currentStep === 'undefined') {
             this._currentStep = 0;
         } else {
             ++this._currentStep;
@@ -204,10 +197,10 @@
         if ((this._introItems.length) <= this._currentStep) {
             // end of the intro
             // check if any callback is defined
-            if (typeof (this._introCompleteCallback) === 'function') {
+            if (typeof this._introCompleteCallback === 'function') {
                 this._introCompleteCallback.call(this);
             }
-            _exitIntro.call(this, this._targetElement);
+            _exitIntro.call(this);
             return;
         }
 
@@ -235,11 +228,11 @@
       *
       * @api private
       * @method _exitIntro
-      * @param {Object} targetElement
       */
-    function _exitIntro(targetElement) {
+    function _exitIntro() {
+
         // remove overlay layer from the page
-        var overlayLayer = targetElement.querySelector('.introjs-overlay');
+        var overlayLayer = this._rootElement.querySelector('.introjs-overlay');
         // for fade-out animation
         overlayLayer.style.opacity = 0;
         setTimeout(function() {
@@ -249,7 +242,7 @@
         }, 500);
 
         // remove all tooltip layers
-        var tooltipLayer = targetElement.querySelector('.introjs-tooltipLayer');
+        var tooltipLayer = this._rootElement.querySelector('.introjs-tooltipLayer');
         if (tooltipLayer) {
             tooltipLayer.parentNode.removeChild(tooltipLayer);
         }
@@ -286,7 +279,7 @@
         if (disableInteractionLayer === null) {
             disableInteractionLayer = document.createElement('div');
             disableInteractionLayer.className = 'introjs-disableInteraction';
-            this._targetElement.appendChild(disableInteractionLayer);
+            this._rootElement.appendChild(disableInteractionLayer);
         }
 
         var elementPosition = _getOffset(targetElement);
@@ -309,7 +302,7 @@
       * @param {Integer} highlightPadding padding around the highlight that goes on top of the targetElement
       */
     function _showElement(targetElement, content, scrollTo, highlightPadding) {
-        if (typeof (this._introChangeCallback) !== 'undefined') {
+        if (typeof this._introChangeCallback !== 'undefined') {
             this._introChangeCallback.call(this, this._currentStep + 1, targetElement, content);
         }
 
@@ -342,7 +335,7 @@
                                               'left: '  + (elementPosition.left - highlightPadding) + 'px;');
 
             // add tooltip layer to target element
-            this._targetElement.appendChild(tooltipLayer);
+            this._rootElement.appendChild(tooltipLayer);
             tooltipLayer.innerHTML = content;
 
             _bindButtons.call(this, tooltipLayer);
@@ -371,6 +364,10 @@
             targetElement.className += ' introjs-relativePosition';
         }
 
+        _scrollToElement(targetElement);
+    }
+
+    function _scrollToElement(targetElement) {
         var rect = targetElement.getBoundingClientRect();
         var top = rect.bottom - (rect.bottom - rect.top);
         var bottom = rect.bottom - _getWindowSize().height;
@@ -421,7 +418,7 @@
             skipTooltipButton.href = 'javascript:void(0);';
             /* eslint-enable no-script-url */
             skipTooltipButton.onclick = function() {
-                _exitIntro.call(that, that._targetElement);
+                _exitIntro.call(that);
             };
         }
     }
@@ -474,9 +471,8 @@
       *
       * @api private
       * @method _addOverlayLayer
-      * @param {Object} targetElm
       */
-    function _addOverlayLayer(targetElm) {
+    function _addOverlayLayer() {
         var overlayLayer = document.createElement('div');
         var styleText = '';
 
@@ -484,23 +480,26 @@
         overlayLayer.className = 'introjs-overlay';
 
         // check if the target element is body, we should calculate the size of overlay layer in a better way
-        if (targetElm.tagName.toLowerCase() === 'body') {
+        if (this._rootElement.tagName.toLowerCase() === 'body') {
             styleText += 'top: 0; bottom: 0; left: 0; right: 0; position: fixed;';
             overlayLayer.setAttribute('style', styleText);
         } else {
             // set overlay layer position
-            var elementPosition = _getOffset(targetElm);
+            var elementPosition = _getOffset(this._rootElement);
             if (elementPosition) {
-                styleText += 'width: ' + elementPosition.width + 'px; height:' + elementPosition.height + 'px; top:' + elementPosition.top + 'px; left: ' + elementPosition.left + 'px;';
+                styleText += 'width: ' + elementPosition.width + 'px; ' +
+                             'height:' + elementPosition.height + 'px; ' +
+                             'top:' + elementPosition.top + 'px; ' +
+                             'left: ' + elementPosition.left + 'px;';
                 overlayLayer.setAttribute('style', styleText);
             }
         }
 
-        targetElm.appendChild(overlayLayer);
+        this._rootElement.appendChild(overlayLayer);
 
         if (this._options.exitOnOverlayClick) {
             overlayLayer.onclick = function() {
-                _exitIntro.call(this, targetElm);
+                _exitIntro.call(this);
             }.bind(this);
         }
 
@@ -508,8 +507,6 @@
             styleText += 'opacity: ' + this._options.overlayOpacity + ';';
             overlayLayer.setAttribute('style', styleText);
         }.bind(this), 10);
-
-        return true;
     }
 
     /**
@@ -567,17 +564,20 @@
         return obj3;
     }
 
-    var introJs = function(targetElm) {
-        if (typeof (targetElm) === 'object') {
+    /**
+     * @param [rootElm] optional root element to scope the intro to just that part of the DOM
+     */
+    var introJs = function(rootElm) {
+        if (typeof rootElm === 'object') {
             // Ok, create a new instance
-            return new IntroJs(targetElm);
+            return new IntroJs(rootElm);
 
-        } else if (typeof (targetElm) === 'string') {
+        } else if (typeof rootElm === 'string') {
             // select the target element with query selector
-            var targetElement = document.querySelector(targetElm);
+            var rootElement = document.querySelector(rootElm);
 
-            if (targetElement) {
-                return new IntroJs(targetElement);
+            if (rootElement) {
+                return new IntroJs(rootElement);
             } else {
                 throw new Error('There is no element with given selector.');
             }
@@ -616,10 +616,10 @@
             return this;
         },
         exit: function() {
-            _exitIntro.call(this, this._targetElement);
+            _exitIntro.call(this);
         },
         onchange: function(providedCallback) {
-            if (typeof (providedCallback) === 'function') {
+            if (typeof providedCallback === 'function') {
                 this._introChangeCallback = providedCallback;
             } else {
                 throw new Error('Provided callback for onchange was not a function.');
@@ -627,7 +627,7 @@
             return this;
         },
         oncomplete: function(providedCallback) {
-            if (typeof (providedCallback) === 'function') {
+            if (typeof providedCallback === 'function') {
                 this._introCompleteCallback = providedCallback;
             } else {
                 throw new Error('Provided callback for oncomplete was not a function.');
@@ -635,7 +635,7 @@
             return this;
         },
         onexit: function(providedCallback) {
-            if (typeof (providedCallback) === 'function') {
+            if (typeof providedCallback === 'function') {
                 this._introExitCallback = providedCallback;
             } else {
                 throw new Error('Provided callback for onexit was not a function.');
