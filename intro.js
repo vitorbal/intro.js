@@ -71,9 +71,12 @@
     /**
      * @api private
      * @param {Object} stepObject JSON object that represents a single step
+     * @param {String/Function} stepObject.template
+     *
      * @returns {Object} The object representation of a single intro step
      */
     function _getStepDataFromObject(stepObject) {
+
         return {
             // the element to highlight
             element: this._targetElement.querySelector(stepObject.element),
@@ -244,10 +247,11 @@
                 overlayLayer.parentNode.removeChild(overlayLayer);
             }
         }, 500);
-        // remove all helper layers
-        var helperLayer = targetElement.querySelector('.introjs-helperLayer');
-        if (helperLayer) {
-            helperLayer.parentNode.removeChild(helperLayer);
+
+        // remove all tooltip layers
+        var tooltipLayer = targetElement.querySelector('.introjs-tooltipLayer');
+        if (tooltipLayer) {
+            tooltipLayer.parentNode.removeChild(tooltipLayer);
         }
         // remove `introjs-showElement` class from the element
         var showElement = document.querySelector('.introjs-showElement');
@@ -287,14 +291,12 @@
 
         var elementPosition = _getOffset(targetElement);
 
-
-        // set new position to helper layer
+        // set new position for the 'disableInteraction' layer
         disableInteractionLayer.setAttribute('style', 'width: ' + (elementPosition.width + highlightPadding * 2) + 'px; ' +
                                                        'height:' + (elementPosition.height + highlightPadding * 2) + 'px; ' +
                                                        'top:'    + (elementPosition.top - highlightPadding) + 'px;' +
                                                        'left: '  + (elementPosition.left - highlightPadding) + 'px;');
     }
-
 
     /**
       * Show an element on the page
@@ -307,20 +309,19 @@
       * @param {Integer} highlightPadding padding around the highlight that goes on top of the targetElement
       */
     function _showElement(targetElement, content, scrollTo, highlightPadding) {
-
         if (typeof (this._introChangeCallback) !== 'undefined') {
             this._introChangeCallback.call(this, this._currentStep + 1, targetElement, content);
         }
 
-        var oldHelperLayer = document.querySelector('.introjs-helperLayer');
+        var oldTooltipLayer = document.querySelector('.introjs-tooltipLayer');
         var elementPosition = _getOffset(targetElement);
 
-        if (oldHelperLayer != null) {
+        if (oldTooltipLayer != null) {
             // hide old tooltip
-            oldHelperLayer.innerHTML = '';
+            oldTooltipLayer.innerHTML = '';
 
-            // set new position to helper layer
-            oldHelperLayer.setAttribute('style', 'width: ' + (elementPosition.width + highlightPadding * 2) + 'px; ' +
+            // set new position to tooltip layer
+            oldTooltipLayer.setAttribute('style', 'width: ' + (elementPosition.width + highlightPadding * 2) + 'px; ' +
                                                  'height:' + (elementPosition.height + highlightPadding * 2) + 'px; ' +
                                                  'top:'    + (elementPosition.top - highlightPadding) + 'px;' +
                                                  'left: '  + (elementPosition.left - highlightPadding) + 'px;');
@@ -328,23 +329,23 @@
             var oldShowElement = document.querySelector('.introjs-showElement');
             oldShowElement.className = oldShowElement.className.replace(/introjs-[a-zA-Z]+/g, '').replace(/^\s+|\s+$/g, '');
             // create new tooltip
-            oldHelperLayer.innerHTML = content;
-            _bindButtons.call(this, oldHelperLayer);
+            oldTooltipLayer.innerHTML = content;
+            _bindButtons.call(this, oldTooltipLayer);
 
         } else {
-            var helperLayer = document.createElement('div');
+            var tooltipLayer = document.createElement('div');
 
-            helperLayer.className = 'introjs-helperLayer';
-            helperLayer.setAttribute('style', 'width: ' + (elementPosition.width + highlightPadding * 2) + 'px; ' +
+            tooltipLayer.className = 'introjs-tooltipLayer';
+            tooltipLayer.setAttribute('style', 'width: ' + (elementPosition.width + highlightPadding * 2) + 'px; ' +
                                               'height:' + (elementPosition.height + highlightPadding * 2) + 'px; ' +
                                               'top:'    + (elementPosition.top - highlightPadding) + 'px;' +
                                               'left: '  + (elementPosition.left - highlightPadding) + 'px;');
 
-            // add helper layer to target element
-            this._targetElement.appendChild(helperLayer);
-            helperLayer.innerHTML = content;
+            // add tooltip layer to target element
+            this._targetElement.appendChild(tooltipLayer);
+            tooltipLayer.innerHTML = content;
 
-            _bindButtons.call(this, helperLayer);
+            _bindButtons.call(this, tooltipLayer);
         }
 
         // disable interaction
@@ -557,8 +558,12 @@
         var obj3 = {};
         var attrname;
 
-        for (attrname in obj1) { obj3[attrname] = obj1[attrname]; }
-        for (attrname in obj2) { obj3[attrname] = obj2[attrname]; }
+        for (attrname in obj1) {
+            obj3[attrname] = obj1[attrname];
+        }
+        for (attrname in obj2) {
+            obj3[attrname] = obj2[attrname];
+        }
         return obj3;
     }
 
