@@ -327,15 +327,9 @@
             // remove old classes
             var oldShowElement = document.querySelector('.introjs-showElement');
             oldShowElement.className = oldShowElement.className.replace(/introjs-[a-zA-Z]+/g, '').replace(/^\s+|\s+$/g, '');
-            // we should wait until the CSS3 transition is completed (it's 0.3 sec) to prevent incorrect `height` and `width` calculation
-            if (this._lastShowElementTimer) {
-                clearTimeout(this._lastShowElementTimer);
-            }
-            this._lastShowElementTimer = setTimeout(function() {
-                // create new tooltip
-                oldHelperLayer.innerHTML = content;
-                _bindButtons.call(this, oldHelperLayer);
-            }.bind(this), 350);
+            // create new tooltip
+            oldHelperLayer.innerHTML = content;
+            _bindButtons.call(this, oldHelperLayer);
 
         } else {
             var helperLayer = document.createElement('div');
