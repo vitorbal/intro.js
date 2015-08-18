@@ -1,5 +1,5 @@
 /**
-  * Intro.js v0.3.0
+  * Intro.js v0.4.0
   * MIT licensed
   *
   * Original idea and implementation by Afshin Mehrabani (@afshinmeh)
@@ -20,7 +20,7 @@
 })(this, function(exports) {
     'use strict';
     // Default config/variables
-    var VERSION = '0.3.1';
+    var VERSION = '0.4.0';
 
     /**
       * IntroJs main class
@@ -32,8 +32,6 @@
 
         this._options = {
             overlayOpacity: 0.5,
-            // padding of the highlight above the current step element
-            highlightPadding: 10,
             nextButton: '.introjs-next',
             prevButton: '.introjs-prev',
             skipButton: '.introjs-skip',
@@ -52,9 +50,6 @@
      * @returns {Object} The object representation of a single intro step
      */
     function _getStepDataFromElement(stepElement) {
-        // use default padding if no custom was provided
-        var highlightPadding = stepElement.getAttribute('data-intro-padding') || this._options.highlightPadding;
-
         return {
             // the element to highlight
             element: this._rootElement.querySelector(stepElement.getAttribute('data-intro-element')),
@@ -62,9 +57,7 @@
             content: _getElementHTML(stepElement),
             step: parseInt(stepElement.getAttribute('data-intro-step'), 10),
             // custom scrolling offset for this step
-            scrollTo: parseInt(stepElement.getAttribute('data-intro-scroll-to'), 10),
-            // custom highlight padding for this step
-            highlightPadding: parseInt(highlightPadding, 10)
+            scrollTo: parseInt(stepElement.getAttribute('data-intro-scroll-to'), 10)
         };
     }
 
@@ -76,7 +69,6 @@
      * @returns {Object} The object representation of a single intro step
      */
     function _getStepDataFromObject(stepObject) {
-
         return {
             // the element to highlight
             element: this._rootElement.querySelector(stepObject.element),
@@ -84,9 +76,7 @@
             content: _getElementHTML(this._rootElement.querySelector(stepObject.template)),
             step: stepObject.step,
             // custom scrolling offset for this step
-            scrollTo: stepObject.scrollTo || null,
-            // custom highlight padding for this step
-            highlightPadding: stepObject.highlightPadding || this._options.highlightPadding
+            scrollTo: stepObject.scrollTo || null
         };
     }
 
@@ -206,7 +196,7 @@
         }
 
         var currentItem = this._introItems[this._currentStep];
-        _showElement.call(this, currentItem.element, currentItem.content, currentItem.scrollTo, currentItem.highlightPadding);
+        _showElement.call(this, currentItem.element, currentItem.content, currentItem.scrollTo);
     }
 
     /**
@@ -221,7 +211,7 @@
         }
 
         var currentItem = this._introItems[--this._currentStep];
-        _showElement.call(this, currentItem.element, currentItem.content, currentItem.scrollTo, currentItem.highlightPadding);
+        _showElement.call(this, currentItem.element, currentItem.content, currentItem.scrollTo);
     }
 
     /**
@@ -277,9 +267,8 @@
      * @api private
      * @method _disableInteraction
      * @param {Object} targetElement the currently highlighted element
-     * @param {Integer} highlightPadding padding around the highlight that goes on top of the targetElement
      */
-    function _disableInteraction(targetElement, highlightPadding) {
+    function _disableInteraction(targetElement) {
         var disableInteractionLayer = document.querySelector('.introjs-disableInteraction');
 
         if (disableInteractionLayer === null) {
@@ -291,10 +280,10 @@
         var elementPosition = _getOffset(targetElement);
 
         // set new position for the 'disableInteraction' layer
-        disableInteractionLayer.setAttribute('style', 'width: ' + (elementPosition.width + highlightPadding * 2) + 'px; ' +
-                                                       'height:' + (elementPosition.height + highlightPadding * 2) + 'px; ' +
-                                                       'top:'    + (elementPosition.top - highlightPadding) + 'px;' +
-                                                       'left: '  + (elementPosition.left - highlightPadding) + 'px;');
+        disableInteractionLayer.setAttribute('style', 'width: ' + elementPosition.width + 'px; ' +
+                                                      'height:' + elementPosition.height + 'px; ' +
+                                                      'top:'    + elementPosition.top + 'px;' +
+                                                      'left: '  + elementPosition.left + 'px;');
     }
 
     /**
@@ -305,9 +294,8 @@
       * @param {HTMLElement} targetElement the element to highlight
       * @param {String} content the content of this intro step
       * @param {Integer} scrollTo if set, forces a scroll to position (element - scrollTo) for this intro step
-      * @param {Integer} highlightPadding padding around the highlight that goes on top of the targetElement
       */
-    function _showElement(targetElement, content, scrollTo, highlightPadding) {
+    function _showElement(targetElement, content, scrollTo) {
         if (typeof this._introChangeCallback === 'function') {
             this._introChangeCallback.call(this, this._currentStep + 1, targetElement, content);
         }
@@ -320,7 +308,7 @@
             oldTooltipLayer.innerHTML = '';
 
             // set new position to tooltip layer
-            _positionTooltipLayer(elementPosition, highlightPadding, oldTooltipLayer);
+            _positionTooltipLayer(elementPosition, oldTooltipLayer);
 
             // remove old classes
             var oldShowElement = document.querySelector('.introjs-showElement');
@@ -333,7 +321,7 @@
             var tooltipLayer = document.createElement('div');
 
             tooltipLayer.className = 'introjs-tooltipLayer';
-            _positionTooltipLayer(elementPosition, highlightPadding, tooltipLayer);
+            _positionTooltipLayer(elementPosition, tooltipLayer);
 
             // add tooltip layer to target element
             this._rootElement.appendChild(tooltipLayer);
@@ -343,7 +331,7 @@
 
         // disable interaction
         if (this._options.disableInteraction === true) {
-            _disableInteraction.call(this, targetElement, highlightPadding);
+            _disableInteraction.call(this, targetElement);
         }
 
         _highlightElement(targetElement);
@@ -356,14 +344,13 @@
      * @api private
      * @method _positionTooltipLayer
      * @param {Object} targetElementPosition the highlighted element's position info. Use _getOffset to get it.
-     * @param {Integer} highlightPadding padding around the highlight that goes on the targetElement
      * @param {HTMLElement} tooltipLayer reference to the tooltip layer
      */
-    function _positionTooltipLayer(targetElementPosition, highlightPadding, tooltipLayer) {
-        tooltipLayer.setAttribute('style', 'width: ' + (targetElementPosition.width + highlightPadding * 2) + 'px; ' +
-                                           'height:' + (targetElementPosition.height + highlightPadding * 2) + 'px; ' +
-                                           'top:'    + (targetElementPosition.top - highlightPadding) + 'px;' +
-                                           'left: '  + (targetElementPosition.left - highlightPadding) + 'px;');
+    function _positionTooltipLayer(targetElementPosition, tooltipLayer) {
+        tooltipLayer.setAttribute('style', 'top:'   + (targetElementPosition.top) + 'px;' +
+                                           'left: ' + (targetElementPosition.left) + 'px;');
+        tooltipLayer.style.width = targetElementPosition.width + 'px';
+        tooltipLayer.style.height = targetElementPosition.height + 'px';
     }
 
     /**
