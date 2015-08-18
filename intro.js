@@ -126,8 +126,6 @@
         // set it to the introJs object
         this._introItems = introItems;
 
-        // add overlay layer to the page
-        _addOverlayLayer.call(this);
         // then, start the show
         _nextStep.call(this);
 
@@ -314,21 +312,21 @@
             this._introChangeCallback.call(this, this._currentStep + 1, targetElement, content);
         }
 
+        // add overlay layer to the page
+        _createOrUpdateOverlayLayer.call(this, targetElement);
+
         var oldTooltipLayer = document.querySelector('.introjs-tooltipLayer');
 
         if (oldTooltipLayer !== null) {
-            // hide old tooltip
-            oldTooltipLayer.innerHTML = '';
-
-
-            // remove old classes
+            // remove old classes from targetElement of previous step
             var oldShowElement = document.querySelector('.introjs-showElement');
             oldShowElement.className = oldShowElement.className.replace(/introjs-[a-zA-Z]+/g, '').replace(/^\s+|\s+$/g, '');
+
+            // hide old tooltip
+            oldTooltipLayer.innerHTML = '';
             // create new tooltip
             oldTooltipLayer.innerHTML = content;
-
             _bindButtons.call(this, oldTooltipLayer);
-
             // set new position to tooltip layer
             _positionTooltipLayer(tooltipPosition, targetElement, oldTooltipLayer);
 
@@ -559,47 +557,56 @@
     }
 
     /**
-      * Add overlay layer to the page
+      * Add overlay layer to the page.
+      * The overlay gets inserted right after the targetElement so we can avoid new stacking contexts set by parents
+      * of the targetElement
       *
       * @api private
       * @method _addOverlayLayer
+      * @param {HTMLElement} targetElement the element to highlight for this step
       */
-    function _addOverlayLayer() {
-        var overlayLayer = document.createElement('div');
+    function _createOrUpdateOverlayLayer(targetElement) {
+        var overlayLayer = this._rootElement.querySelector('.introjs-overlay');
         var styleText = '';
 
-        // set css class name
-        overlayLayer.className = 'introjs-overlay';
+        // Create overlay layer if not existing yet
+        if (overlayLayer === null) {
+            overlayLayer = document.createElement('div');
 
-        // check if the target element is body, we should calculate the size of overlay layer in a better way
-        if (this._rootElement.tagName.toLowerCase() === 'body') {
-            styleText += 'top: 0; bottom: 0; left: 0; right: 0; position: fixed;';
-            overlayLayer.setAttribute('style', styleText);
-        } else {
-            // set overlay layer position
-            var elementPosition = _getOffset(this._rootElement);
-            if (elementPosition) {
-                styleText += 'width: ' + elementPosition.width + 'px; ' +
-                             'height:' + elementPosition.height + 'px; ' +
-                             'top:' + elementPosition.top + 'px; ' +
-                             'left: ' + elementPosition.left + 'px;';
+            // set css class name
+            overlayLayer.className = 'introjs-overlay';
+
+            // check if the target element is body, we should calculate the size of overlay layer in a better way
+            if (this._rootElement.tagName.toLowerCase() === 'body') {
+                styleText += 'top: 0; bottom: 0; left: 0; right: 0; position: fixed;';
                 overlayLayer.setAttribute('style', styleText);
+            } else {
+                // set overlay layer position
+                var elementPosition = _getOffset(this._rootElement);
+                if (elementPosition) {
+                    styleText += 'width: ' + elementPosition.width + 'px; ' +
+                                 'height:' + elementPosition.height + 'px; ' +
+                                 'top:' + elementPosition.top + 'px; ' +
+                                 'left: ' + elementPosition.left + 'px;';
+                    overlayLayer.setAttribute('style', styleText);
+                }
             }
+
+            if (this._options.exitOnOverlayClick) {
+                overlayLayer.onclick = function() {
+                    _exitIntro.call(this);
+                }.bind(this);
+            }
+
+            setTimeout(function() {
+                styleText += 'opacity: ' + this._options.overlayOpacity + ';';
+                overlayLayer.setAttribute('style', styleText);
+            }.bind(this), 10);
         }
 
-        this._rootElement.appendChild(overlayLayer);
-
-        if (this._options.exitOnOverlayClick) {
-            overlayLayer.onclick = function() {
-                _exitIntro.call(this);
-            }.bind(this);
-        }
-
-        setTimeout(function() {
-            styleText += 'opacity: ' + this._options.overlayOpacity + ';';
-            overlayLayer.setAttribute('style', styleText);
-        }.bind(this), 10);
+        targetElement.parentNode.appendChild(overlayLayer);
     }
+
 
     /**
       * Get an element position on the page
