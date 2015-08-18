@@ -40,7 +40,10 @@
             // close introduction when clicking on overlay layer
             exitOnOverlayClick: true,
             // disable any interaction with the element being highlighted
-            disableInteraction: false
+            disableInteraction: false,
+            // possible values:
+            // 'top', 'right', 'left', 'bottom', 'bottom-right', 'bottom-middle', 'bottom-left'
+            tooltipPosition: 'right'
         };
     }
 
@@ -50,6 +53,9 @@
      * @returns {Object} The object representation of a single intro step
      */
     function _getStepDataFromElement(stepElement) {
+        // use default position if none was provided
+        var tooltipPosition = stepElement.getAttribute('data-intro-tooltip-position') || this._options.tooltipPosition;
+
         return {
             // the element to highlight
             element: this._rootElement.querySelector(stepElement.getAttribute('data-intro-element')),
@@ -57,7 +63,8 @@
             content: _getElementHTML(stepElement),
             step: parseInt(stepElement.getAttribute('data-intro-step'), 10),
             // custom scrolling offset for this step
-            scrollTo: parseInt(stepElement.getAttribute('data-intro-scroll-to'), 10)
+            scrollTo: parseInt(stepElement.getAttribute('data-intro-scroll-to'), 10),
+            tooltipPosition: tooltipPosition
         };
     }
 
@@ -76,7 +83,8 @@
             content: _getElementHTML(this._rootElement.querySelector(stepObject.template)),
             step: stepObject.step,
             // custom scrolling offset for this step
-            scrollTo: stepObject.scrollTo || null
+            scrollTo: stepObject.scrollTo || null,
+            tooltipPosition: stepObject.tooltipPosition || this._options.tooltipPosition
         };
     }
 
@@ -196,7 +204,9 @@
         }
 
         var currentItem = this._introItems[this._currentStep];
-        _showElement.call(this, currentItem.element, currentItem.content, currentItem.scrollTo);
+        _showElement.call(
+            this, currentItem.element, currentItem.content, currentItem.scrollTo, currentItem.tooltipPosition
+        );
     }
 
     /**
@@ -211,7 +221,9 @@
         }
 
         var currentItem = this._introItems[--this._currentStep];
-        _showElement.call(this, currentItem.element, currentItem.content, currentItem.scrollTo);
+        _showElement.call(
+            this, currentItem.element, currentItem.content, currentItem.scrollTo, currentItem.tooltipPosition
+        );
     }
 
     /**
@@ -241,7 +253,8 @@
         // remove `introjs-showElement` class from the element
         var showElement = document.querySelector('.introjs-showElement');
         if (showElement) {
-            showElement.className = showElement.className.replace(/introjs-[a-zA-Z]+/g, '').replace(/^\s+|\s+$/g, ''); // This is a manual trim.
+            // this is a manual trim.
+            showElement.className = showElement.className.replace(/introjs-[a-zA-Z]+/g, '').replace(/^\s+|\s+$/g, '');
         }
 
         // remove disable-interaction layer
@@ -294,39 +307,42 @@
       * @param {HTMLElement} targetElement the element to highlight
       * @param {String} content the content of this intro step
       * @param {Integer} scrollTo if set, forces a scroll to position (element - scrollTo) for this intro step
+      * @param {String} tooltipPosition string representing what positioning strategy to use
       */
-    function _showElement(targetElement, content, scrollTo) {
+    function _showElement(targetElement, content, scrollTo, tooltipPosition) {
         if (typeof this._introChangeCallback === 'function') {
             this._introChangeCallback.call(this, this._currentStep + 1, targetElement, content);
         }
 
         var oldTooltipLayer = document.querySelector('.introjs-tooltipLayer');
-        var elementPosition = _getOffset(targetElement);
 
         if (oldTooltipLayer !== null) {
             // hide old tooltip
             oldTooltipLayer.innerHTML = '';
 
-            // set new position to tooltip layer
-            _positionTooltipLayer(elementPosition, oldTooltipLayer);
 
             // remove old classes
             var oldShowElement = document.querySelector('.introjs-showElement');
             oldShowElement.className = oldShowElement.className.replace(/introjs-[a-zA-Z]+/g, '').replace(/^\s+|\s+$/g, '');
             // create new tooltip
             oldTooltipLayer.innerHTML = content;
+
             _bindButtons.call(this, oldTooltipLayer);
+
+            // set new position to tooltip layer
+            _positionTooltipLayer(tooltipPosition, targetElement, oldTooltipLayer);
 
         } else {
             var tooltipLayer = document.createElement('div');
 
             tooltipLayer.className = 'introjs-tooltipLayer';
-            _positionTooltipLayer(elementPosition, tooltipLayer);
 
             // add tooltip layer to target element
             this._rootElement.appendChild(tooltipLayer);
             tooltipLayer.innerHTML = content;
             _bindButtons.call(this, tooltipLayer);
+
+            _positionTooltipLayer(tooltipPosition, targetElement, tooltipLayer);
         }
 
         // disable interaction
@@ -343,14 +359,68 @@
      *
      * @api private
      * @method _positionTooltipLayer
-     * @param {Object} targetElementPosition the highlighted element's position info. Use _getOffset to get it.
+     * @param {String} tooltipPosition string representing what positioning strategy to use
+     * @param {HTMLElement} targetElement the element that is currently highlighted
      * @param {HTMLElement} tooltipLayer reference to the tooltip layer
      */
-    function _positionTooltipLayer(targetElementPosition, tooltipLayer) {
-        tooltipLayer.setAttribute('style', 'top:'   + (targetElementPosition.top) + 'px;' +
-                                           'left: ' + (targetElementPosition.left) + 'px;');
-        tooltipLayer.style.width = targetElementPosition.width + 'px';
-        tooltipLayer.style.height = targetElementPosition.height + 'px';
+    function _positionTooltipLayer(tooltipPosition, targetElement, tooltipLayer) {
+        tooltipLayer.style.width = '500px';
+
+        var targetElementOffset = _getOffset(targetElement);
+        var tooltipOffset = _getOffset(tooltipLayer);
+        var tooltipHeight = tooltipOffset.height;
+
+        // reset the old style
+        tooltipLayer.style.top = null;
+        tooltipLayer.style.left = null;
+
+        // arrowLayer.style.display = 'inherit';
+
+        switch (tooltipPosition) {
+            // show to the top, center vertically
+            case 'top':
+                tooltipLayer.style.left = targetElementOffset.left -
+                                            (tooltipOffset.width / 2 - targetElementOffset.width / 2) + 'px';
+                tooltipLayer.style.top = (targetElementOffset.top - tooltipHeight - 20) + 'px';
+                // arrowLayer.className = 'introjs-arrow bottom';
+                break;
+            // show to the top-right
+            case 'right':
+                tooltipLayer.style.left = (targetElementOffset.left + targetElementOffset.width + 20) + 'px';
+                tooltipLayer.style.top = targetElementOffset.top + 'px';
+                break;
+            // show to the top-left
+            case 'left':
+                tooltipLayer.style.left = (targetElementOffset.left - tooltipOffset.width - 20) + 'px';
+                tooltipLayer.style.top = targetElementOffset.top + 'px';
+                // arrowLayer.className = 'introjs-arrow right';
+              break;
+            case 'bottom':
+            case 'bottom-middle':
+            // Bottom-middle is the same as the default bottom
+                // arrowLayer.className      = 'introjs-arrow top-middle';
+                tooltipLayer.style.left = targetElementOffset.left -
+                                            (tooltipOffset.width / 2 - targetElementOffset.width / 2) + 'px';
+                tooltipLayer.style.top = targetElementOffset.top + targetElementOffset.height + 20 + 'px';
+                break;
+            case 'bottom-right':
+                // arrowLayer.className      = 'introjs-arrow top-right';
+                tooltipLayer.style.left = targetElementOffset.left -
+                                            (tooltipOffset.width - targetElementOffset.width) + 'px';
+                tooltipLayer.style.top = targetElementOffset.top + targetElementOffset.height + 20 + 'px';
+                break;
+            case 'bottom-left':
+                tooltipLayer.style.left = targetElementOffset.left + 'px';
+                tooltipLayer.style.top = targetElementOffset.top + targetElementOffset.height + 20 + 'px';
+
+                // arrowLayer.className = 'introjs-arrow top';
+                break;
+            case 'custom':
+            default:
+                tooltipLayer.style.left = targetElementOffset.left + 'px';
+                tooltipLayer.style.top = targetElementOffset.top + 'px';
+                break;
+        }
     }
 
     /**
