@@ -254,6 +254,12 @@
             showElement.className = showElement.className.replace(/introjs-[a-zA-Z]+/g, '').replace(/^\s+|\s+$/g, ''); // This is a manual trim.
         }
 
+        // remove disable-interaction layer
+        var disableInteractionLayer = this._rootElement.querySelector('.introjs-disableInteraction');
+        if (disableInteractionLayer) {
+            disableInteractionLayer.parentNode.removeChild(disableInteractionLayer);
+        }
+
         // clean listeners
         window.removeEventListener('keydown', this._onKeyDown, true);
 
