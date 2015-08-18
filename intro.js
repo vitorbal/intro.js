@@ -133,7 +133,9 @@
         // then, start the show
         _nextStep.call(this);
 
-        window.addEventListener('keydown', _onKeyDown.bind(this), true);
+        // Save a bound version of the function so we can call removeEventListener on it later
+        this._onKeyDown = _onKeyDown.bind(this);
+        window.addEventListener('keydown', this._onKeyDown, true);
 
         return false;
     }
@@ -176,7 +178,7 @@
     function _goToStep(step) {
         //because steps starts with zero
         this._currentStep = step - 2;
-        if (typeof this._introItems !== 'undefined') {
+        if (this._introItems !== undefined) {
             _nextStep.call(this);
         }
     }
@@ -188,15 +190,14 @@
       * @method _nextStep
       */
     function _nextStep() {
-        if (typeof this._currentStep === 'undefined') {
+        if (this._currentStep === undefined) {
             this._currentStep = 0;
         } else {
             ++this._currentStep;
         }
 
-        if ((this._introItems.length) <= this._currentStep) {
-            // end of the intro
-            // check if any callback is defined
+        if (this._introItems.length <= this._currentStep) {
+            // end of the intro. Check if any callback is defined
             if (typeof this._introCompleteCallback === 'function') {
                 this._introCompleteCallback.call(this);
             }
@@ -246,17 +247,16 @@
         if (tooltipLayer) {
             tooltipLayer.parentNode.removeChild(tooltipLayer);
         }
+
         // remove `introjs-showElement` class from the element
         var showElement = document.querySelector('.introjs-showElement');
         if (showElement) {
             showElement.className = showElement.className.replace(/introjs-[a-zA-Z]+/g, '').replace(/^\s+|\s+$/g, ''); // This is a manual trim.
         }
+
         // clean listeners
-        if (window.removeEventListener) {
-            window.removeEventListener('keydown', this._onKeyDown, true);
-        } else if (document.detachEvent) { //IE
-            document.detachEvent('onkeydown', this._onKeyDown);
-        }
+        window.removeEventListener('keydown', this._onKeyDown, true);
+
         // set the step to zero
         this._currentStep = undefined;
         // check if any callback is defined
@@ -296,28 +296,26 @@
       *
       * @api private
       * @method _showElement
-      * @param {Object} targetElement the element to highlight
-      * @param {Object} content the content of this intro step
+      * @param {HTMLElement} targetElement the element to highlight
+      * @param {String} content the content of this intro step
       * @param {Integer} scrollTo if set, forces a scroll to position (element - scrollTo) for this intro step
       * @param {Integer} highlightPadding padding around the highlight that goes on top of the targetElement
       */
     function _showElement(targetElement, content, scrollTo, highlightPadding) {
-        if (typeof this._introChangeCallback !== 'undefined') {
+        if (typeof this._introChangeCallback === 'function') {
             this._introChangeCallback.call(this, this._currentStep + 1, targetElement, content);
         }
 
         var oldTooltipLayer = document.querySelector('.introjs-tooltipLayer');
         var elementPosition = _getOffset(targetElement);
 
-        if (oldTooltipLayer != null) {
+        if (oldTooltipLayer !== null) {
             // hide old tooltip
             oldTooltipLayer.innerHTML = '';
 
             // set new position to tooltip layer
-            oldTooltipLayer.setAttribute('style', 'width: ' + (elementPosition.width + highlightPadding * 2) + 'px; ' +
-                                                 'height:' + (elementPosition.height + highlightPadding * 2) + 'px; ' +
-                                                 'top:'    + (elementPosition.top - highlightPadding) + 'px;' +
-                                                 'left: '  + (elementPosition.left - highlightPadding) + 'px;');
+            _positionTooltipLayer(elementPosition, highlightPadding, oldTooltipLayer);
+
             // remove old classes
             var oldShowElement = document.querySelector('.introjs-showElement');
             oldShowElement.className = oldShowElement.className.replace(/introjs-[a-zA-Z]+/g, '').replace(/^\s+|\s+$/g, '');
@@ -329,15 +327,11 @@
             var tooltipLayer = document.createElement('div');
 
             tooltipLayer.className = 'introjs-tooltipLayer';
-            tooltipLayer.setAttribute('style', 'width: ' + (elementPosition.width + highlightPadding * 2) + 'px; ' +
-                                              'height:' + (elementPosition.height + highlightPadding * 2) + 'px; ' +
-                                              'top:'    + (elementPosition.top - highlightPadding) + 'px;' +
-                                              'left: '  + (elementPosition.left - highlightPadding) + 'px;');
+            _positionTooltipLayer(elementPosition, highlightPadding, tooltipLayer);
 
             // add tooltip layer to target element
             this._rootElement.appendChild(tooltipLayer);
             tooltipLayer.innerHTML = content;
-
             _bindButtons.call(this, tooltipLayer);
         }
 
@@ -346,6 +340,34 @@
             _disableInteraction.call(this, targetElement, highlightPadding);
         }
 
+        _highlightElement(targetElement);
+        _scrollToElement(targetElement, scrollTo);
+    }
+
+    /**
+     * Positions the tooltip according to the position of the element that is currently being highlighted
+     *
+     * @api private
+     * @method _positionTooltipLayer
+     * @param {Object} targetElementPosition the highlighted element's position info. Use _getOffset to get it.
+     * @param {Integer} highlightPadding padding around the highlight that goes on the targetElement
+     * @param {HTMLElement} tooltipLayer reference to the tooltip layer
+     */
+    function _positionTooltipLayer(targetElementPosition, highlightPadding, tooltipLayer) {
+        tooltipLayer.setAttribute('style', 'width: ' + (targetElementPosition.width + highlightPadding * 2) + 'px; ' +
+                                           'height:' + (targetElementPosition.height + highlightPadding * 2) + 'px; ' +
+                                           'top:'    + (targetElementPosition.top - highlightPadding) + 'px;' +
+                                           'left: '  + (targetElementPosition.left - highlightPadding) + 'px;');
+    }
+
+    /**
+     * Adds a 'highlighted' effect to the element specified
+     *
+     * @api private
+     * @method _highlightElement
+     * @param {HTMLElement} targetElement the element to be highlighted
+     */
+    function _highlightElement(targetElement) {
         // add target element position style
         targetElement.className += ' introjs-showElement';
 
@@ -360,14 +382,21 @@
         // I don't know is this necessary or not, but I clear the position for better comparing
         currentElementPosition = currentElementPosition.toLowerCase();
         if (currentElementPosition !== 'absolute' && currentElementPosition !== 'relative') {
-            //change to new intro item
+            // so the tooltip can be positioned relative to this element
             targetElement.className += ' introjs-relativePosition';
         }
-
-        _scrollToElement(targetElement);
     }
 
-    function _scrollToElement(targetElement) {
+    /**
+     * Scrolls the viewport to the position specified or, if not specified, just enough
+     * so that the currently highlighted element is inside the viewport
+     *
+     * @api private
+     * @method _scrollToElement
+     * @param {HTMLElement} targetElement the element that is currently being highlighted
+     * @param {Integer} scrollTo if set, forces a scroll to the position specified
+     */
+    function _scrollToElement(targetElement, scrollTo) {
         var rect = targetElement.getBoundingClientRect();
         var top = rect.bottom - (rect.bottom - rect.top);
         var bottom = rect.bottom - _getWindowSize().height;
@@ -545,11 +574,12 @@
 
     /**
       * Overwrites obj1's values with obj2's and adds obj2's if non existent in obj1
-      * via: http://stackoverflow.com/questions/171251/how-can-i-merge-properties-of-two-javascript-objects-dynamically
       *
-      * @param obj1
-      * @param obj2
-      * @returns obj3 a new object based on obj1 and obj2
+      * @api private
+      * @method _mergeOptions
+      * @param {Object} obj1
+      * @param {Object} obj2
+      * @returns {Object} a new object based on obj1 and obj2
       */
     function _mergeOptions(obj1, obj2) {
         var obj3 = {};
