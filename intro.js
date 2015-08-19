@@ -371,8 +371,9 @@
         // reset the old style
         tooltipLayer.style.top = null;
         tooltipLayer.style.left = null;
+        tooltipLayer.className = tooltipLayer.className.replace(/introjs-arrow[a-zA-Z-]*/g, '')
+                                                       .replace(/^\s+|\s+$/g, '');
 
-        // arrowLayer.style.display = 'inherit';
 
         switch (tooltipPosition) {
             // show to the top, center vertically
@@ -380,43 +381,44 @@
                 tooltipLayer.style.left = targetElementOffset.left -
                                             (tooltipOffset.width / 2 - targetElementOffset.width / 2) + 'px';
                 tooltipLayer.style.top = (targetElementOffset.top - tooltipHeight - 20) + 'px';
-                // arrowLayer.className = 'introjs-arrow bottom';
+
+                tooltipLayer.className += ' introjs-arrow introjs-arrow-bottom';
                 break;
             // show to the top-right
             case 'right':
                 tooltipLayer.style.left = (targetElementOffset.left + targetElementOffset.width + 20) + 'px';
                 tooltipLayer.style.top = targetElementOffset.top + 'px';
+
+                tooltipLayer.className += ' introjs-arrow introjs-arrow-left-top';
                 break;
             // show to the top-left
             case 'left':
                 tooltipLayer.style.left = (targetElementOffset.left - tooltipOffset.width - 20) + 'px';
                 tooltipLayer.style.top = targetElementOffset.top + 'px';
-                // arrowLayer.className = 'introjs-arrow right';
+
+                tooltipLayer.className += ' introjs-arrow introjs-arrow-right-top';
               break;
             case 'bottom':
             case 'bottom-middle':
-            // Bottom-middle is the same as the default bottom
-                // arrowLayer.className      = 'introjs-arrow top-middle';
                 tooltipLayer.style.left = targetElementOffset.left -
                                             (tooltipOffset.width / 2 - targetElementOffset.width / 2) + 'px';
                 tooltipLayer.style.top = targetElementOffset.top + targetElementOffset.height + 20 + 'px';
+
+                tooltipLayer.className += ' introjs-arrow introjs-arrow-top-middle';
                 break;
             case 'bottom-right':
-                // arrowLayer.className      = 'introjs-arrow top-right';
                 tooltipLayer.style.left = targetElementOffset.left -
                                             (tooltipOffset.width - targetElementOffset.width) + 'px';
                 tooltipLayer.style.top = targetElementOffset.top + targetElementOffset.height + 20 + 'px';
+
+                tooltipLayer.className += ' introjs-arrow introjs-arrow-top-right';
                 break;
             case 'bottom-left':
+            default:
                 tooltipLayer.style.left = targetElementOffset.left + 'px';
                 tooltipLayer.style.top = targetElementOffset.top + targetElementOffset.height + 20 + 'px';
 
-                // arrowLayer.className = 'introjs-arrow top';
-                break;
-            case 'custom':
-            default:
-                tooltipLayer.style.left = targetElementOffset.left + 'px';
-                tooltipLayer.style.top = targetElementOffset.top + 'px';
+                tooltipLayer.className += ' introjs-arrow introjs-arrow-top-left';
                 break;
         }
     }
