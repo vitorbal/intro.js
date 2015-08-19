@@ -1,9 +1,9 @@
 /**
-  * Intro.js v0.4.0
-  * MIT licensed
-  *
-  * Original idea and implementation by Afshin Mehrabani (@afshinmeh)
-  */
+ * Intro.js v0.5.0
+ * MIT licensed
+ *
+ * Original idea and implementation by Afshin Mehrabani (@afshinmeh)
+ */
 (function(root, factory) {
     'use strict';
 
@@ -20,7 +20,7 @@
 })(this, function(exports) {
     'use strict';
     // Default config/variables
-    var VERSION = '0.4.0';
+    var VERSION = '0.5.0';
 
     /**
       * IntroJs main class
@@ -70,17 +70,28 @@
 
     /**
      * @api private
-     * @param {Object} stepObject JSON object that represents a single step
+     *
+     * @param {Object} stepObject
+     * JSON object that represents a single step
      * @param {String/Function} stepObject.template
+     * Can be a selector to get the tooltip content from a DOM element, or a function to call that should
+     * return a string to use as content.
      *
      * @returns {Object} The object representation of a single intro step
      */
     function _getStepDataFromObject(stepObject) {
+        var tooltipContent = '';
+        if (typeof stepObject.template === 'function') {
+            tooltipContent = stepObject.template();
+        } else {
+            tooltipContent = _getElementHTML(this._rootElement.querySelector(stepObject.template));
+        }
+
         return {
             // the element to highlight
             element: this._rootElement.querySelector(stepObject.element),
             // content of the intro tooltip
-            content: _getElementHTML(this._rootElement.querySelector(stepObject.template)),
+            content: tooltipContent,
             step: stepObject.step,
             // custom scrolling offset for this step
             scrollTo: stepObject.scrollTo || null,
@@ -362,8 +373,6 @@
      * @param {HTMLElement} tooltipLayer reference to the tooltip layer
      */
     function _positionTooltipLayer(tooltipPosition, targetElement, tooltipLayer) {
-        tooltipLayer.style.width = '500px';
-
         var targetElementOffset = _getOffset(targetElement);
         var tooltipOffset = _getOffset(tooltipLayer);
         var tooltipHeight = tooltipOffset.height;
@@ -373,7 +382,6 @@
         tooltipLayer.style.left = null;
         tooltipLayer.className = tooltipLayer.className.replace(/introjs-arrow[a-zA-Z-]*/g, '')
                                                        .replace(/^\s+|\s+$/g, '');
-
 
         switch (tooltipPosition) {
             // show to the top, center vertically

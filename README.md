@@ -30,6 +30,44 @@ Optionally, pass one parameter to `introJs` function to limit the presentation s
 
 **For example** `introJs(".introduction-farm").start();` runs the introduction only for elements with `class='introduction-farm'`.
 
+## Configuring steps programmatically
+Instead of using DOM elements and `data-` attributes, you may choose to configure the steps programmatically. Just pass a `step` option when creating the introJs object
+```javascript
+introJs().setOptions({
+    steps: [
+        {
+            step: 1,
+            template: '.js-intro-step-1',
+            element: '.js-header'
+        },
+        {
+            step: 2,
+            template: '.js-intro-step-1',
+            element: '#js-wire-container'
+        }
+    ]
+}).start();
+```
+Each step's object should look like this:
+```javascript
+    {
+        // {Number} Number of this step
+        step: 1,
+        // {String/Function} Selector to get the tooltip content from a DOM element, or a function to
+        // call that should return a string to use as content.
+        template: '',
+        // {String} Selector to the HTMLElement to highlight
+        element: '',
+        // {Number} (optional) Window scroll position to be set for this step
+        scrollTo: 120,
+        // {String} (optional) position of the tooltip. Possible values:
+        // 'top', 'right', 'left', 'bottom-right-aligned', 'bottom-middle-aligned', 'bottom-left-aligned'
+        // If none is provided, defaults to 'right'
+        tooltipPosition: 'top'
+    }
+
+```
+
 ## API
 
 ###introJs([targetElm])
@@ -47,8 +85,8 @@ Creating an introJs object.
 
 **Example:**
 ```javascript
-introJs() //without selector, start introduction for whole page
-introJs("#intro-farm") //start introduction for element id='intro-farm'
+introJs() // without selector, start introduction for whole page
+introJs("#intro-farm") // start introduction for element id='intro-farm'
 ````
 
 -----
