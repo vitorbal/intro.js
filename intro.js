@@ -82,7 +82,7 @@
     function _getStepDataFromObject(stepObject) {
         var tooltipContent = '';
         if (typeof stepObject.template === 'function') {
-            tooltipContent = stepObject.template();
+            tooltipContent = stepObject.template({ step: stepObject.step });
         } else {
             tooltipContent = _getElementHTML(this._rootElement.querySelector(stepObject.template));
         }
@@ -326,23 +326,23 @@
         // add overlay layer to the page
         _createOrUpdateOverlayLayer.call(this, targetElement);
 
-        var oldTooltipLayer = document.querySelector('.introjs-tooltipLayer');
+        var tooltipLayer = document.querySelector('.introjs-tooltipLayer');
 
-        if (oldTooltipLayer !== null) {
+        if (tooltipLayer !== null) {
             // remove old classes from targetElement of previous step
             var oldShowElement = document.querySelector('.introjs-showElement');
             oldShowElement.className = oldShowElement.className.replace(/introjs-[a-zA-Z]+/g, '').replace(/^\s+|\s+$/g, '');
 
             // hide old tooltip
-            oldTooltipLayer.innerHTML = '';
+            tooltipLayer.innerHTML = '';
             // create new tooltip
-            oldTooltipLayer.innerHTML = content;
-            _bindButtons.call(this, oldTooltipLayer);
+            tooltipLayer.innerHTML = content;
+            _bindButtons.call(this, tooltipLayer);
             // set new position to tooltip layer
-            _positionTooltipLayer(tooltipPosition, targetElement, oldTooltipLayer);
+            _positionTooltipLayer(tooltipPosition, targetElement, tooltipLayer);
 
         } else {
-            var tooltipLayer = document.createElement('div');
+            tooltipLayer = document.createElement('div');
 
             tooltipLayer.className = 'introjs-tooltipLayer';
 
@@ -360,7 +360,7 @@
         }
 
         _highlightElement(targetElement);
-        _scrollToElement(targetElement, scrollTo);
+        _scrollToElement(targetElement, tooltipLayer, scrollTo);
     }
 
     /**
@@ -460,31 +460,24 @@
 
     /**
      * Scrolls the viewport to the position specified or, if not specified, just enough
-     * so that the currently highlighted element is inside the viewport
+     * so that the currently highlighted element and its tooltip are inside the viewport
      *
      * @api private
      * @method _scrollToElement
      * @param {HTMLElement} targetElement the element that is currently being highlighted
+     * @param {HTMLElement} tooltipElement the tooltip for the current step
      * @param {Integer} scrollTo if set, forces a scroll to the position specified
      */
-    function _scrollToElement(targetElement, scrollTo) {
-        var rect = targetElement.getBoundingClientRect();
-        var top = rect.bottom - (rect.bottom - rect.top);
-        var bottom = rect.bottom - _getWindowSize().height;
+    function _scrollToElement(targetElement, tooltipElement, scrollTo) {
+        var targetElementRect = targetElement.getBoundingClientRect();
+        var tooltipOffset = _getOffset(tooltipElement);
 
         // Accept custom data-intro-scroll-to param
         if (scrollTo || scrollTo === 0) {
-            window.scrollBy(0, rect.top - scrollTo);
+            window.scrollBy(0, targetElementRect.top - scrollTo);
 
-        } else if (!_elementInViewport(targetElement)) {
-            // Scroll down
-            if (bottom < 0) {
-                window.scrollBy(0, bottom + 100); // 70px + 30px padding from edge to look nice
-
-            // Scroll up by default
-            } else {
-                window.scrollBy(0, top - 30); // 30px padding from edge to look nice
-            }
+        } else if (!_elementInViewport(tooltipElement)) {
+            window.scroll(0, tooltipOffset.top - 30);
         }
     }
 
