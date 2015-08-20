@@ -469,15 +469,13 @@
      * @param {Integer} scrollTo if set, forces a scroll to the position specified
      */
     function _scrollToElement(targetElement, tooltipElement, scrollTo) {
-        var targetElementRect = targetElement.getBoundingClientRect();
         var tooltipOffset = _getOffset(tooltipElement);
 
         // Accept custom data-intro-scroll-to param
         if (scrollTo || scrollTo === 0) {
-            window.scrollBy(0, targetElementRect.top - scrollTo);
-
+            window.scroll(0, scrollTo);
         } else if (!_elementInViewport(tooltipElement)) {
-            window.scroll(0, tooltipOffset.top - 30);
+            window.scroll(0, tooltipOffset.top - 40);
         }
     }
 
@@ -512,29 +510,6 @@
             /* eslint-enable no-script-url */
             skipTooltipButton.onclick = function() {
                 _exitIntro.call(that);
-            };
-        }
-    }
-
-    /**
-      * Provides a cross-browser way to get the screen dimensions
-      * via: http://stackoverflow.com/questions/5864467/internet-explorer-innerheight
-      *
-      * @api private
-      * @method _getWindowSize
-      * @returns {Object} width and height attributes
-      */
-    function _getWindowSize() {
-        if (window.innerWidth !== undefined) {
-            return {
-                width: window.innerWidth,
-                height: window.innerHeight
-            };
-        } else {
-            var D = document.documentElement;
-            return {
-                width: D.clientWidth,
-                height: D.clientHeight
             };
         }
     }
