@@ -1,5 +1,5 @@
 /**
- * Intro.js v0.5.0
+ * Intro.js v0.6.0
  * MIT licensed
  *
  * Original idea and implementation by Afshin Mehrabani (@afshinmeh)
@@ -20,7 +20,7 @@
 })(this, function(exports) {
     'use strict';
     // Default config/variables
-    var VERSION = '0.5.0';
+    var VERSION = '0.6.0';
 
     /**
       * IntroJs main class
@@ -80,22 +80,31 @@
      * @returns {Object} The object representation of a single intro step
      */
     function _getStepDataFromObject(stepObject) {
-        var tooltipContent = '';
+        var tooltipContent, element, tooltipPosition;
+
         if (typeof stepObject.template === 'function') {
             tooltipContent = stepObject.template({ step: stepObject.step });
         } else {
             tooltipContent = _getElementHTML(this._rootElement.querySelector(stepObject.template));
         }
 
+        if (stepObject.element) {
+            element = this._rootElement.querySelector(stepObject.element);
+            tooltipPosition = stepObject.tooltipPosition || this._options.tooltipPosition;
+        } else {
+            element = this._rootElement;
+            tooltipPosition = 'center';
+        }
+
         return {
             // the element to highlight
-            element: this._rootElement.querySelector(stepObject.element),
+            element: element,
             // content of the intro tooltip
             content: tooltipContent,
             step: stepObject.step,
             // custom scrolling offset for this step
-            scrollTo: stepObject.scrollTo || null,
-            tooltipPosition: stepObject.tooltipPosition || this._options.tooltipPosition
+            scrollTo: stepObject.scrollTo === undefined ? null : stepObject.scrollTo,
+            tooltipPosition: tooltipPosition
         };
     }
 
@@ -380,10 +389,16 @@
         // reset the old style
         tooltipLayer.style.top = null;
         tooltipLayer.style.left = null;
+        tooltipLayer.style.transform = null;
         tooltipLayer.className = tooltipLayer.className.replace(/introjs-arrow[a-zA-Z-]*/g, '')
                                                        .replace(/^\s+|\s+$/g, '');
 
         switch (tooltipPosition) {
+            case 'center':
+                tooltipLayer.style.left = '50%';
+                tooltipLayer.style.top = '20%';
+                tooltipLayer.style.transform = 'translateX(-50%)';
+                break;
             // show to the top, center vertically
             case 'top':
                 tooltipLayer.style.left = targetElementOffset.left -
@@ -546,6 +561,8 @@
     function _createOrUpdateOverlayLayer(targetElement) {
         var overlayLayer = this._rootElement.querySelector('.introjs-overlay');
         var styleText = '';
+        var rootElementIsBody = this._rootElement.tagName.toLowerCase() === 'body';
+        var targetElementIsBody = targetElement.tagName.toLowerCase() === 'body';
 
         // Create overlay layer if not existing yet
         if (overlayLayer === null) {
@@ -555,7 +572,7 @@
             overlayLayer.className = 'introjs-overlay';
 
             // check if the target element is body, we should calculate the size of overlay layer in a better way
-            if (this._rootElement.tagName.toLowerCase() === 'body') {
+            if (rootElementIsBody) {
                 styleText += 'top: 0; bottom: 0; left: 0; right: 0; position: fixed;';
                 overlayLayer.setAttribute('style', styleText);
             } else {
@@ -582,7 +599,11 @@
             }.bind(this), 10);
         }
 
-        targetElement.parentNode.appendChild(overlayLayer);
+        if (targetElementIsBody) {
+            targetElement.appendChild(overlayLayer);
+        } else {
+            targetElement.parentNode.appendChild(overlayLayer);
+        }
     }
 
 

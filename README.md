@@ -61,7 +61,7 @@ Each step's object should look like this:
         // {Number} (optional) Window scroll position to be set for this step
         scrollTo: 120,
         // {String} (optional) position of the tooltip. Possible values:
-        // 'top', 'right', 'left', 'bottom-right-aligned', 'bottom-middle-aligned', 'bottom-left-aligned'
+        // 'top', 'right', 'left', 'bottom-right', 'bottom-middle', 'bottom-left'
         // If none is provided, defaults to 'right'
         tooltipPosition: 'top'
     }
