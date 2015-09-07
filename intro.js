@@ -1,5 +1,5 @@
 /**
- * Intro.js v0.6.0
+ * Intro.js v0.7.0
  * MIT licensed
  *
  * Original idea and implementation by Afshin Mehrabani (@afshinmeh)
@@ -20,7 +20,7 @@
 })(this, function(exports) {
     'use strict';
     // Default config/variables
-    var VERSION = '0.6.0';
+    var VERSION = '0.7.0';
 
     /**
       * IntroJs main class
@@ -324,7 +324,7 @@
       * @method _showElement
       * @param {HTMLElement} targetElement the element to highlight
       * @param {String} content the content of this intro step
-      * @param {Integer} scrollTo if set, forces a scroll to position (element - scrollTo) for this intro step
+      * @param {Number} scrollTo if set, forces a scroll to position (element - scrollTo) for this intro step
       * @param {String} tooltipPosition string representing what positioning strategy to use
       */
     function _showElement(targetElement, content, scrollTo, tooltipPosition) {
@@ -369,7 +369,7 @@
         }
 
         _highlightElement(targetElement);
-        _scrollToElement(targetElement, tooltipLayer, scrollTo);
+        _scrollToElement.call(this, targetElement, tooltipLayer, scrollTo);
     }
 
     /**
@@ -420,7 +420,7 @@
                 tooltipLayer.style.top = targetElementOffset.top + 'px';
 
                 tooltipLayer.className += ' introjs-arrow introjs-arrow-right-top';
-              break;
+                break;
             case 'bottom':
             case 'bottom-middle':
                 tooltipLayer.style.left = targetElementOffset.left -
@@ -481,17 +481,81 @@
      * @method _scrollToElement
      * @param {HTMLElement} targetElement the element that is currently being highlighted
      * @param {HTMLElement} tooltipElement the tooltip for the current step
-     * @param {Integer} scrollTo if set, forces a scroll to the position specified
+     * @param {Number} scrollTo if set, forces a scroll to the position specified
      */
     function _scrollToElement(targetElement, tooltipElement, scrollTo) {
         var tooltipOffset = _getOffset(tooltipElement);
 
         // Accept custom data-intro-scroll-to param
         if (scrollTo || scrollTo === 0) {
-            window.scroll(0, scrollTo);
+            _smoothScroll.call(this, scrollTo);
         } else if (!_elementInViewport(tooltipElement)) {
-            window.scroll(0, tooltipOffset.top - 40);
+            _smoothScroll.call(this, tooltipOffset.top - 40);
         }
+    }
+
+    /*
+     * Scrolls to a destination on the Y axis, smoothly.
+     * @api private
+     * @param {Number} destinationYPosition Y-position to scroll to
+     */
+    function _smoothScroll(destinationYPosition) {
+        // Stop any current scrolling
+        clearInterval(this.interval);
+
+        var currentYPosition = _getCurrentYPosition();
+
+        var stepSize = parseInt((destinationYPosition - currentYPosition) / 25, 10);
+        this.interval = setInterval(function() {
+            _smoothScrollSingleStep.call(this, stepSize, destinationYPosition);
+        }.bind(this), 10);
+    }
+
+    /**
+     * Single step of a running smoothScroll operation
+     * @api private
+     * @param  {Number} stepSize amount to add to the Y-scroll value for this run
+     * @param  {[type]} destinationYPosition the Y-position of the destination we want to achieve
+     */
+    function _smoothScrollSingleStep(stepSize, destinationYPosition) {
+        var previousYPosition = _getCurrentYPosition();
+        var wasAbove = (previousYPosition < destinationYPosition);
+
+        window.scrollTo(0, previousYPosition + stepSize);
+
+        var newYPosition = _getCurrentYPosition();
+        var isAboveNow = (newYPosition < destinationYPosition);
+
+        if (wasAbove !== isAboveNow || previousYPosition === newYPosition) {
+            // if we've just scrolled past the destination, or
+            // we haven't moved from the last scroll (i.e., we're at the
+            // bottom of the page) then scroll exactly to the link
+            window.scrollTo(0, destinationYPosition);
+            // cancel the repeating timer
+            clearInterval(this.interval);
+        }
+    }
+
+    /**
+      * Calculates the current Y scroll position of the body
+      *
+      * @api private
+      * @return {Number} Y position of the body scroll
+      */
+    function _getCurrentYPosition() {
+        if (document.body && document.body.scrollTop) {
+            return document.body.scrollTop;
+        }
+
+        if (document.documentElement && document.documentElement.scrollTop) {
+            return document.documentElement.scrollTop;
+        }
+
+        if (window.pageYOffset) {
+            return window.pageYOffset;
+        }
+
+        return 0;
     }
 
     /**
