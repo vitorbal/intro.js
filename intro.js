@@ -1,5 +1,5 @@
 /**
- * Intro.js v0.7.0
+ * Intro.js v0.7.1
  * MIT licensed
  *
  * Original idea and implementation by Afshin Mehrabani (@afshinmeh)
@@ -20,7 +20,7 @@
 })(this, function(exports) {
     'use strict';
     // Default config/variables
-    var VERSION = '0.7.0';
+    var VERSION = '0.7.1';
 
     /**
       * IntroJs main class
@@ -389,7 +389,9 @@
         // reset the old style
         tooltipLayer.style.top = null;
         tooltipLayer.style.left = null;
-        tooltipLayer.style.transform = null;
+        tooltipLayer.style.transform = '';
+        tooltipLayer.style['-ms-transform'] = '';
+        tooltipLayer.style['-webkit-transform'] = '';
         tooltipLayer.className = tooltipLayer.className.replace(/introjs-arrow[a-zA-Z-]*/g, '')
                                                        .replace(/^\s+|\s+$/g, '');
 
@@ -398,6 +400,8 @@
                 tooltipLayer.style.left = '50%';
                 tooltipLayer.style.top = '20%';
                 tooltipLayer.style.transform = 'translateX(-50%)';
+                tooltipLayer.style['-ms-transform'] = 'translateX(-50%)';
+                tooltipLayer.style['-webkit-transform'] = 'translateX(-50%)';
                 break;
             // show to the top, center vertically
             case 'top':
