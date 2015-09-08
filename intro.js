@@ -1,5 +1,5 @@
 /**
- * Intro.js v0.7.1
+ * Intro.js v0.7.2
  * MIT licensed
  *
  * Original idea and implementation by Afshin Mehrabani (@afshinmeh)
@@ -20,7 +20,7 @@
 })(this, function(exports) {
     'use strict';
     // Default config/variables
-    var VERSION = '0.7.1';
+    var VERSION = '0.7.2';
 
     /**
       * IntroJs main class
@@ -499,45 +499,45 @@
     }
 
     /*
-     * Scrolls to a destination on the Y axis, smoothly.
+     * Scrolls to a destination on the Y axis, with an InOut easing animation.
      * @api private
      * @param {Number} destinationYPosition Y-position to scroll to
      */
     function _smoothScroll(destinationYPosition) {
-        // Stop any current scrolling
-        clearInterval(this.interval);
-
+        var duration = 1000;
+        var startTime = Date.now();
         var currentYPosition = _getCurrentYPosition();
+        var min = function(a, b) {
+            return a < b ? a : b;
+        };
 
-        var stepSize = parseInt((destinationYPosition - currentYPosition) / 25, 10);
-        this.interval = setInterval(function() {
-            _smoothScrollSingleStep.call(this, stepSize, destinationYPosition);
-        }.bind(this), 10);
-    }
+        var requestAnimationFrame = function(fn) {
+            if (window.requestAnimationFrame) {
+                window.requestAnimationFrame(fn);
+            } else {
+                window.setTimeout(fn, 10);
+            }
+        };
 
-    /**
-     * Single step of a running smoothScroll operation
-     * @api private
-     * @param  {Number} stepSize amount to add to the Y-scroll value for this run
-     * @param  {[type]} destinationYPosition the Y-position of the destination we want to achieve
-     */
-    function _smoothScrollSingleStep(stepSize, destinationYPosition) {
-        var previousYPosition = _getCurrentYPosition();
-        var wasAbove = (previousYPosition < destinationYPosition);
+        // acceleration until halfway, then deceleration
+        // based on: http://gizma.com/easing/#quint3
+        var easeInOutFunction = function(t) {
+            return t < 0.5 ? (16 * t * t * t * t * t) : (1 + 16 * (--t) * t * t * t * t);
+        };
 
-        window.scrollTo(0, previousYPosition + stepSize);
+        var stepFunction = function() {
+            var currentTime = Date.now();
+            var time = min(1, ((currentTime - startTime) / duration));
+            var easedTime = easeInOutFunction(time);
 
-        var newYPosition = _getCurrentYPosition();
-        var isAboveNow = (newYPosition < destinationYPosition);
+            window.scrollTo(0, (easedTime * (destinationYPosition - currentYPosition)) + currentYPosition);
 
-        if (wasAbove !== isAboveNow || previousYPosition === newYPosition) {
-            // if we've just scrolled past the destination, or
-            // we haven't moved from the last scroll (i.e., we're at the
-            // bottom of the page) then scroll exactly to the link
-            window.scrollTo(0, destinationYPosition);
-            // cancel the repeating timer
-            clearInterval(this.interval);
-        }
+            if (time < 1) {
+                requestAnimationFrame(stepFunction);
+            }
+        };
+
+        requestAnimationFrame(stepFunction);
     }
 
     /**
