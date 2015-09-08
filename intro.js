@@ -1,5 +1,5 @@
 /**
- * Intro.js v0.7.2
+ * Intro.js v0.7.3
  * MIT licensed
  *
  * Original idea and implementation by Afshin Mehrabani (@afshinmeh)
@@ -20,7 +20,7 @@
 })(this, function(exports) {
     'use strict';
     // Default config/variables
-    var VERSION = '0.7.2';
+    var VERSION = '0.7.3';
 
     /**
       * IntroJs main class
@@ -369,7 +369,7 @@
         }
 
         _highlightElement(targetElement);
-        _scrollToElement.call(this, targetElement, tooltipLayer, scrollTo);
+        _scrollToElement(targetElement, tooltipLayer, scrollTo);
     }
 
     /**
@@ -492,9 +492,9 @@
 
         // Accept custom data-intro-scroll-to param
         if (scrollTo || scrollTo === 0) {
-            _smoothScroll.call(this, scrollTo);
+            _smoothScroll(scrollTo);
         } else if (!_elementInViewport(tooltipElement)) {
-            _smoothScroll.call(this, tooltipOffset.top - 40);
+            _smoothScroll(tooltipOffset.top - 40);
         }
     }
 
