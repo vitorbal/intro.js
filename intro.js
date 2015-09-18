@@ -284,12 +284,13 @@
         // clean listeners
         window.removeEventListener('keydown', this._onKeyDown, true);
 
-        // set the step to zero
-        this._currentStep = undefined;
         // check if any callback is defined
         if (this._introExitCallback !== undefined) {
-            this._introExitCallback.call(this);
+            this._introExitCallback.call(this, this._currentStep + 1);
         }
+
+        // set the step to zero
+        this._currentStep = undefined;
     }
 
     /**
