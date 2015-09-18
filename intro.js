@@ -213,6 +213,9 @@
         }
 
         if (this._introItems.length <= this._currentStep) {
+            // because we've just passed the total number of steps with the previous increment
+            this._currentStep = this._currentStep - 1;
+
             // end of the intro. Check if any callback is defined
             if (typeof this._introCompleteCallback === 'function') {
                 this._introCompleteCallback.call(this);
