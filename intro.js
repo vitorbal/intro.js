@@ -43,7 +43,9 @@
             disableInteraction: false,
             // possible values:
             // 'top', 'right', 'left', 'bottom', 'bottom-right', 'bottom-middle', 'bottom-left'
-            tooltipPosition: 'right'
+            tooltipPosition: 'right',
+            // Forces smooth scrolling to target element even when it's already in view
+            forceScroll: true
         };
     }
 
@@ -373,7 +375,7 @@
         }
 
         _highlightElement(targetElement);
-        _scrollToElement(targetElement, tooltipLayer, scrollTo);
+        _scrollToElement.call(this, targetElement, tooltipLayer, scrollTo);
     }
 
     /**
@@ -497,7 +499,10 @@
         // Accept custom data-intro-scroll-to param
         if (scrollTo || scrollTo === 0) {
             _smoothScroll(scrollTo);
-        } else if (!_elementInViewport(tooltipElement)) {
+            return;
+        }
+
+        if (this._options.forceScroll || !_elementInViewport(tooltipElement)) {
             _smoothScroll(tooltipOffset.top - 40);
         }
     }
